@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import PwaRegister from "./PwaRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,9 +14,20 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "NWACUHO Conference Schedule",
-  description: "Conference schedule for NWACUHO Annual Conference",
+  description: "NWACUHO Annual Conference schedule and personal agenda.",
+  applicationName: "NWACUHO Conference Schedule",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "NWACUHO",
+  },
+  themeColor: "#28903b",
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -24,10 +36,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-neutral-900/5`}
       >
+        {/* PWA service worker registration */}
+        <PwaRegister />
+
         <header className="w-full border-b border-slate-200 bg-white/80 backdrop-blur-sm">
           <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2 text-xs md:text-sm">
             <div className="font-semibold text-slate-900">
