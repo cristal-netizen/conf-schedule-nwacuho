@@ -144,9 +144,22 @@ const sessionTypes = [
   "Meal",
 ];
 
-// Utility to format time as "9:00 AM" from "14:30"
+// Utility to format time safely
 function toDisplayTime(time: string): string {
-  const [h, m] = time.split(":").map(Number);
+  if (!time) return "TBD";
+
+  // Accept strict 24h "HH:MM"
+  const match24 = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
+  if (!match24) {
+    // If it's already something like "9:00 AM" or malformed, just show it
+    return time;
+  }
+
+  const h = Number(match24[1]);
+  const m = Number(match24[2]);
+
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return "TBD";
+
   const hour12 = ((h + 11) % 12) + 1;
   const suffix = h >= 12 ? "PM" : "AM";
   return `${hour12}:${m.toString().padStart(2, "0")} ${suffix}`;
