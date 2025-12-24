@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Filter, MapPin, Search, Star } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,99 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-// ---- Meta ----
+// =======================
+// Config (EDIT THESE)
+// =======================
+const APPS_SCRIPT_URL = "https://script.google.com/a/macros/nwacuho.org/s/AKfycbxc3zsGv08ARJEFhCwdkt9aEqsgF_RP3tVtxoN1iiSk57rq9gyyG-A8SHIEVfhiOuzssw/exec"; // e.g. https://script.google.com/macros/s/XXXX/exec
+const FAVORITES_KEY = "nwacuho:favorites:v1";
+
+// =======================
+// Types
+// =======================
+type Session = {
+  id: string;
+  title: string;
+  track: string;
+  type: string;
+  day: "mon" | "tue" | "wed";
+  start: string; // "HH:MM"
+  end: string; // "HH:MM"
+  room: string;
+  level: string;
+  description?: string;
+  presenters: string[];
+};
+
+type ApiResponse = {
+  lastUpdated?: string;
+  sessions?: Session[];
+  rowErrors?: Array<{ row: number; id?: string; errors: string[] }>;
+};
+
+// =======================
+// Local favorites helpers
+// =======================
+function loadFavorites(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    const arr = raw ? (JSON.parse(raw) as string[]) : [];
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveFavorites(favs: Set<string>) {
+  try {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favs)));
+  } catch {
+    // ignore quota/private mode errors
+  }
+}
+
+// =======================
+// JSONP fallback (if CORS blocks fetch)
+// =======================
+function fetchJsonp(url: string, timeoutMs = 15000): Promise<ApiResponse> {
+  return new Promise((resolve, reject) => {
+    const cb = `__nw_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const script = document.createElement("script");
+
+    const cleanup = () => {
+      try {
+        delete (window as any)[cb];
+      } catch {
+        // ignore
+      }
+      script.remove();
+    };
+
+    const timer = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("JSONP request timed out"));
+    }, timeoutMs);
+
+    (window as any)[cb] = (data: ApiResponse) => {
+      window.clearTimeout(timer);
+      cleanup();
+      resolve(data);
+    };
+
+    script.src = `${url}${url.includes("?") ? "&" : "?"}callback=${cb}`;
+    script.onerror = () => {
+      window.clearTimeout(timer);
+      cleanup();
+      reject(new Error("JSONP script failed to load"));
+    };
+
+    document.body.appendChild(script);
+  });
+}
+
+// =======================
+// Display helpers
+// =======================
 const conferenceMeta = {
   name: "NWACUHO Annual Conference Schedule",
   year: 2026,
@@ -29,7 +121,7 @@ const days = [
   { id: "mon", label: "Monday" },
   { id: "tue", label: "Tuesday" },
   { id: "wed", label: "Wednesday" },
-];
+] as const;
 
 const tracks = [
   "All Tracks",
@@ -52,21 +144,21 @@ const sessionTypes = [
   "Meal",
 ];
 
-type Session = {
-  id: string;
-  title: string;
-  track: string;
-  type: string;
-  day: "mon" | "tue" | "wed";
-  start: string; // "HH:MM"
-  end: string; // "HH:MM"
-  room: string;
-  level: string;
-  description?: string;
-  presenters: string[];
-};
+// Utility to format time as "9:00 AM" from "14:30"
+function toDisplayTime(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  const hour12 = ((h + 11) % 12) + 1;
+  const suffix = h >= 12 ? "PM" : "AM";
+  return `${hour12}:${m.toString().padStart(2, "0")} ${suffix}`;
+}
 
-// ---- Sessions ----
+function sortSessions(list: Session[]): Session[] {
+  return [...list].sort((a, b) => a.start.localeCompare(b.start));
+}
+
+// =======================
+// Default fallback sessions (your existing mock data)
+// =======================
 const mockSessions: Session[] = [
   // Monday, February 9, 2026
   {
@@ -133,8 +225,7 @@ const mockSessions: Session[] = [
   },
   {
     id: "mon-6",
-    title:
-      "Conference Opening and Welcome (Awards & Scholarship Announcements)",
+    title: "Conference Opening and Welcome (Awards & Scholarship Announcements)",
     track: "Association & Leadership",
     type: "Conference Operations",
     day: "mon",
@@ -438,8 +529,7 @@ const mockSessions: Session[] = [
   },
   {
     id: "wed-4",
-    title:
-      "Morning Announcements and Strategic Plan Presentation / Town Hall",
+    title: "Morning Announcements and Strategic Plan Presentation / Town Hall",
     track: "Association & Leadership",
     type: "Conference Operations",
     day: "wed",
@@ -549,18 +639,9 @@ const mockSessions: Session[] = [
   },
 ];
 
-// Utility to format time as "9:00 AM" from "14:30"
-function toDisplayTime(time: string): string {
-  const [h, m] = time.split(":").map(Number);
-  const hour12 = ((h + 11) % 12) + 1;
-  const suffix = h >= 12 ? "PM" : "AM";
-  return `${hour12}:${m.toString().padStart(2, "0")} ${suffix}`;
-}
-
-function sortSessions(list: Session[]): Session[] {
-  return [...list].sort((a, b) => a.start.localeCompare(b.start));
-}
-
+// =======================
+// Components
+// =======================
 type SessionCardProps = {
   session: Session;
   isFavorite: boolean;
@@ -703,28 +784,92 @@ const FilterBar: React.FC<FilterBarProps> = ({
   );
 };
 
+// =======================
+// Main App
+// =======================
 export default function ConferenceScheduleApp() {
   const [selectedDay, setSelectedDay] = useState<"mon" | "tue" | "wed">("mon");
   const [search, setSearch] = useState("");
   const [track, setTrack] = useState("All Tracks");
   const [type, setType] = useState("All Types");
-  const [favorites, setFavorites] = useState<Set<string>>(() => new Set());
+
+  // Favorites (persisted)
+  const [favorites, setFavorites] = useState<Set<string>>(() => loadFavorites());
   const [onlyFavorites, setOnlyFavorites] = useState(false);
+
+  // Sessions from API (fallback to mock)
+  const [sessions, setSessions] = useState<Session[]>(mockSessions);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   const handleToggleFavorite = (id: string) => {
     setFavorites((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
+  // Persist favorites locally
+  useEffect(() => {
+    saveFavorites(favorites);
+  }, [favorites]);
+
+  // Sync favorites across tabs/windows
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === FAVORITES_KEY) setFavorites(loadFavorites());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // Load schedule from Apps Script (try fetch, then JSONP fallback)
+  useEffect(() => {
+    const url = APPS_SCRIPT_URL?.trim();
+    if (!url || url.includes("PASTE_YOUR")) return;
+
+    setLoading(true);
+    setLoadError(null);
+
+    fetch(url)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return (await res.json()) as ApiResponse;
+      })
+      .catch(async () => {
+        // CORS or fetch failure -> try JSONP
+        return await fetchJsonp(url);
+      })
+      .then((data) => {
+        if (Array.isArray(data.sessions) && data.sessions.length >= 0) {
+          setSessions(data.sessions);
+        } else {
+          throw new Error("Unexpected API response (missing sessions[])");
+        }
+        setLastUpdated(data.lastUpdated ?? null);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoadError("Could not load schedule. Showing the built-in schedule.");
+        setSessions(mockSessions);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Optional: prune favorites that don't exist in the current sessions list
+  useEffect(() => {
+    const valid = new Set(sessions.map((s) => s.id));
+    setFavorites((prev) => {
+      const next = new Set([...prev].filter((id) => valid.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [sessions]);
+
   const filteredSessions = useMemo(() => {
-    let list = mockSessions.filter((s) => s.day === selectedDay);
+    let list = sessions.filter((s) => s.day === selectedDay);
 
     if (track !== "All Tracks") {
       list = list.filter((s) => s.track === track);
@@ -750,7 +895,7 @@ export default function ConferenceScheduleApp() {
     }
 
     return sortSessions(list);
-  }, [selectedDay, search, track, type, favorites, onlyFavorites]);
+  }, [selectedDay, search, track, type, favorites, onlyFavorites, sessions]);
 
   const favoriteCount = favorites.size;
 
@@ -767,10 +912,18 @@ export default function ConferenceScheduleApp() {
               <h1 className="text-2xl font-bold leading-tight md:text-3xl font-['Franklin_Gothic',_Calibri,_system-ui,_sans-serif]">
                 {conferenceMeta.name}
               </h1>
-              <p className="mt-1 text-sm md:text-base">
-                {conferenceMeta.theme}
-              </p>
+              <p className="mt-1 text-sm md:text-base">{conferenceMeta.theme}</p>
+              <div className="mt-2 text-[11px] text-white/80">
+                {loading ? (
+                  <span>Updating schedule…</span>
+                ) : loadError ? (
+                  <span>{loadError}</span>
+                ) : lastUpdated ? (
+                  <span>Last updated: {new Date(lastUpdated).toLocaleString()}</span>
+                ) : null}
+              </div>
             </div>
+
             <div className="text-center md:text-right text-xs md:text-sm min-w-[180px]">
               <div className="flex items-center justify-end gap-2">
                 <CalendarDays className="h-4 w-4" />
@@ -793,7 +946,7 @@ export default function ConferenceScheduleApp() {
 
         {/* Layout */}
         <main className="grid gap-4 md:grid-cols-[260px,1fr]">
-          {/* Left Column: Day selector & filters */}
+          {/* Left Column */}
           <div className="flex flex-col gap-4">
             <Card className="border-slate-200/80 shadow-sm">
               <CardHeader className="pb-3">
@@ -821,7 +974,6 @@ export default function ConferenceScheduleApp() {
                       </TabsTrigger>
                     ))}
                   </TabsList>
-                  {/* Keep for API shape, though we don't use specific TabsContent here */}
                   <TabsContent value={selectedDay} />
                 </Tabs>
               </CardContent>
@@ -857,7 +1009,7 @@ export default function ConferenceScheduleApp() {
             </Card>
           </div>
 
-          {/* Right Column: Sessions for selected day */}
+          {/* Right Column */}
           <section className="flex min-h-[420px] flex-col gap-3 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm">
             <div className="flex items-baseline justify-between gap-2 border-b border-slate-100 pb-2">
               <div>
