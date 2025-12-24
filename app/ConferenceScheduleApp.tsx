@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 // =======================
 // Config (EDIT THESE)
 // =======================
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxc3zsGv08ARJEFhCwdkt9aEqsgF_RP3tVtxoN1iiSk57rq9gyyG-A8SHIEVfhiOuzssw/exec"; // e.g. https://script.google.com/macros/s/XXXX/exec
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby0pPaSuE0XhIwAqencFZTTEYtFT57wB648KDppSymJA4CSb1HHeQHnBPX1ZMbteZUy/exec"; // e.g. https://script.google.com/macros/s/XXXX/exec
 const FAVORITES_KEY = "nwacuho:favorites:v1";
 
 // =======================
