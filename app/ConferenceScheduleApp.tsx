@@ -1,5 +1,10 @@
+"use client";
+
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { CalendarDays, Filter, MapPin, Search, Star } from "lucide-react";
+
+import { SPEAKER_ID_BY_NAME } from "@/lib/speakersData";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +24,8 @@ import { Label } from "@/components/ui/label";
 // =======================
 // Config (EDIT THESE)
 // =======================
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby0pPaSuE0XhIwAqencFZTTEYtFT57wB648KDppSymJA4CSb1HHeQHnBPX1ZMbteZUy/exec"; // e.g. https://script.google.com/macros/s/XXXX/exec
+const APPS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycby0pPaSuE0XhIwAqencFZTTEYtFT57wB648KDppSymJA4CSb1HHeQHnBPX1ZMbteZUy/exec";
 const FAVORITES_KEY = "nwacuho:favorites:v1";
 
 // =======================
@@ -36,7 +42,10 @@ type Session = {
   room: string;
   level: string;
   description?: string;
-  presenters: string[];
+
+  // API may return these as string or array
+  presenters: string[] | string;
+  presenterIds?: string[] | string; // semicolon-separated OR array
 };
 
 type ApiResponse = {
@@ -144,20 +153,13 @@ const sessionTypes = [
   "Meal",
 ];
 
-// Utility to format time safely
 function toDisplayTime(time: string): string {
   if (!time) return "TBD";
-
-  // Accept strict 24h "HH:MM"
   const match24 = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
-  if (!match24) {
-    // If it's already something like "9:00 AM" or malformed, just show it
-    return time;
-  }
+  if (!match24) return time;
 
   const h = Number(match24[1]);
   const m = Number(match24[2]);
-
   if (!Number.isFinite(h) || !Number.isFinite(m)) return "TBD";
 
   const hour12 = ((h + 11) % 12) + 1;
@@ -167,6 +169,84 @@ function toDisplayTime(time: string): string {
 
 function sortSessions(list: Session[]): Session[] {
   return [...list].sort((a, b) => a.start.localeCompare(b.start));
+}
+
+// =======================
+// Presenter linking helpers
+// =======================
+function normPresenter(s: string) {
+  return (s || "")
+    .toLowerCase()
+    .replace(/\./g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function splitCommaNames(v: string) {
+  return (v || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function splitSemicolonIds(v: string) {
+  return (v || "")
+    .split(";")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function asNameArray(presenters: string[] | string | undefined): string[] {
+  if (!presenters) return [];
+  return Array.isArray(presenters) ? presenters : splitCommaNames(presenters);
+}
+
+function asIdArray(presenterIds: string[] | string | undefined): string[] {
+  if (!presenterIds) return [];
+  return Array.isArray(presenterIds)
+    ? presenterIds
+    : splitSemicolonIds(presenterIds);
+}
+
+function PresentersLine({
+  presenters,
+  presenterIds,
+}: {
+  presenters?: string[] | string;
+  presenterIds?: string[] | string;
+}) {
+  const names = asNameArray(presenters);
+  const ids = asIdArray(presenterIds);
+
+  if (!names.length) return null;
+  if (names.length === 1 && normPresenter(names[0]) === "n/a") return null;
+
+  return (
+    <p className="text-xs text-slate-500">
+      <span className="font-semibold">Presenters:</span>{" "}
+      {names.map((name, i) => {
+        const idFromIds = ids[i];
+        const idFromName = SPEAKER_ID_BY_NAME[normPresenter(name)];
+        const id = idFromIds || idFromName;
+
+        return (
+          <span key={`${name}-${i}`}>
+            {id ? (
+              <Link
+                href={`/speakers#${id}`}
+                className="text-[#1f7a2f] font-semibold hover:underline underline-offset-4"
+              >
+                {name}
+              </Link>
+            ) : (
+              <span>{name}</span>
+            )}
+            {i < names.length - 1 ? ", " : ""}
+          </span>
+        );
+      })}
+    </p>
+  );
 }
 
 // =======================
@@ -696,6 +776,7 @@ const SessionCard: React.FC<SessionCardProps> = ({
           <Star className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
         </Button>
       </CardHeader>
+
       <CardContent className="pt-0">
         <div className="mb-2 flex flex-wrap gap-2 text-xs">
           <Badge variant="outline" className="border-slate-300 bg-slate-50">
@@ -704,15 +785,15 @@ const SessionCard: React.FC<SessionCardProps> = ({
           <Badge variant="secondary">{session.type}</Badge>
           {session.level && <Badge variant="outline">{session.level}</Badge>}
         </div>
+
         {session.description && (
           <p className="text-xs text-slate-700 mb-2">{session.description}</p>
         )}
-        {session.presenters?.length > 0 && (
-          <p className="text-xs text-slate-500">
-            <span className="font-semibold">Presenters:</span>{" "}
-            {session.presenters.join(", ")}
-          </p>
-        )}
+
+        <PresentersLine
+          presenters={session.presenters}
+          presenterIds={session.presenterIds}
+        />
       </CardContent>
     </Card>
   );
@@ -857,7 +938,7 @@ export default function ConferenceScheduleApp() {
         return await fetchJsonp(url);
       })
       .then((data) => {
-        if (Array.isArray(data.sessions) && data.sessions.length >= 0) {
+        if (Array.isArray(data.sessions)) {
           setSessions(data.sessions);
         } else {
           throw new Error("Unexpected API response (missing sessions[])");
@@ -884,28 +965,22 @@ export default function ConferenceScheduleApp() {
   const filteredSessions = useMemo(() => {
     let list = sessions.filter((s) => s.day === selectedDay);
 
-    if (track !== "All Tracks") {
-      list = list.filter((s) => s.track === track);
-    }
-
-    if (type !== "All Types") {
-      list = list.filter((s) => s.type === type);
-    }
+    if (track !== "All Tracks") list = list.filter((s) => s.track === track);
+    if (type !== "All Types") list = list.filter((s) => s.type === type);
 
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((s) => {
+        const presentersArr = asNameArray(s.presenters);
         return (
           s.title.toLowerCase().includes(q) ||
           s.description?.toLowerCase().includes(q) ||
-          s.presenters.some((p) => p.toLowerCase().includes(q))
+          presentersArr.some((p) => p.toLowerCase().includes(q))
         );
       });
     }
 
-    if (onlyFavorites) {
-      list = list.filter((s) => favorites.has(s.id));
-    }
+    if (onlyFavorites) list = list.filter((s) => favorites.has(s.id));
 
     return sortSessions(list);
   }, [selectedDay, search, track, type, favorites, onlyFavorites, sessions]);
@@ -932,7 +1007,9 @@ export default function ConferenceScheduleApp() {
                 ) : loadError ? (
                   <span>{loadError}</span>
                 ) : lastUpdated ? (
-                  <span>Last updated: {new Date(lastUpdated).toLocaleString()}</span>
+                  <span>
+                    Last updated: {new Date(lastUpdated).toLocaleString()}
+                  </span>
                 ) : null}
               </div>
             </div>
