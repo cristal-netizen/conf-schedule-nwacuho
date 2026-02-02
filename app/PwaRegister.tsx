@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const SW_URL = "/sw.js?v=4"; // bump this whenever you need to force-update
+const SW_URL = "/sw.js?v=5"; // bump this whenever you need to force-update
 
 export default function PwaRegister() {
   useEffect(() => {
