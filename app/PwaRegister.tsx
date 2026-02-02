@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 
-const SW_URL = "/sw.js?v=5"; // bump this whenever you need to force-update
+const SW_VERSION = "5"; // match your sw.js?v=5
+const RESET_FLAG = `nwacuho:pwa-reset:v${SW_VERSION}`;
 
 export default function PwaRegister() {
   useEffect(() => {
@@ -10,26 +11,37 @@ export default function PwaRegister() {
 
     (async () => {
       try {
-        // Unregister ALL SWs (kills any old controller)
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map((r) => r.unregister()));
+        const alreadyReset = localStorage.getItem(RESET_FLAG) === "1";
 
-        // Clear ALL caches (kills stale app shell/assets)
-        if ("caches" in window) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map((k) => caches.delete(k)));
+        // 1) One-time nuke to break “stuck on old UI”
+        if (!alreadyReset) {
+          localStorage.setItem(RESET_FLAG, "1");
+
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+
+          if ("caches" in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((k) => caches.delete(k)));
+          }
+
+          // Reload ONCE after the reset
+          window.location.reload();
+          return;
         }
 
-        // Register fresh SW, bypassing HTTP cache
-        await navigator.serviceWorker.register(SW_URL, {
+        // 2) Normal registration (no loops)
+        await navigator.serviceWorker.register(`/sw.js?v=${SW_VERSION}`, {
           updateViaCache: "none",
         });
 
-        // Force control + reload once so the app uses the new bundles
-        const reg = await navigator.serviceWorker.ready;
-        reg.active?.postMessage({ type: "SKIP_WAITING" });
-
-        window.location.reload();
+        // Optional: reload once when a new controller takes over
+        let didReload = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (didReload) return;
+          didReload = true;
+          window.location.reload();
+        });
       } catch {
         // ignore
       }
