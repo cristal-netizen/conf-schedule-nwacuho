@@ -1,4 +1,8 @@
-const CACHE_NAME = "nwacuho-schedule-v2"; // <-- bump version
+self.addEventListener("message", (event) => {
+  if (event?.data?.type === "SKIP_WAITING") self.skipWaiting();
+});
+
+const CACHE_NAME = "nwacuho-schedule-v4";
 const ASSETS = ["/", "/manifest.webmanifest"];
 
 // Install: cache the basics
