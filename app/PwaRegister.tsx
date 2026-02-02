@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const SW_VERSION = "5"; // match your sw.js?v=5
+const SW_VERSION = "6"; // match your sw.js?v=6
 const RESET_FLAG = `nwacuho:pwa-reset:v${SW_VERSION}`;
 
 export default function PwaRegister() {
