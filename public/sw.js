@@ -1,11 +1,9 @@
-const CACHE_NAME = "nwacuho-schedule-v1";
+const CACHE_NAME = "nwacuho-schedule-v2"; // <-- bump version
 const ASSETS = ["/", "/manifest.webmanifest"];
 
 // Install: cache the basics
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
   self.skipWaiting();
 });
 
@@ -19,33 +17,24 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for pages, cache-first for same-origin static
+// Fetch
 self.addEventListener("fetch", (event) => {
   const req = event.request;
 
-  // Only handle GET
+  // Only handle GET + same-origin
   if (req.method !== "GET") return;
-
   const url = new URL(req.url);
-
-  // Only cache same-origin
   if (url.origin !== self.location.origin) return;
 
-  // Network-first for navigations (keeps schedule fresh)
+  // ✅ Navigations: ALWAYS network, DO NOT cache HTML
   if (req.mode === "navigate") {
     event.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-          return res;
-        })
-        .catch(() => caches.match(req).then((cached) => cached || caches.match("/")))
+      fetch(req).catch(() => caches.match("/"))
     );
     return;
   }
 
-  // Cache-first for other same-origin requests
+  // Cache-first for other same-origin requests (images/css/js)
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
