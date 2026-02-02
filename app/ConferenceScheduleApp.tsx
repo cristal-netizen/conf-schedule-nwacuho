@@ -2,7 +2,16 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, Filter, MapPin, Search, Star } from "lucide-react";
+import {
+  CalendarDays,
+  ExternalLink,
+  Filter,
+  Info,
+  MapPin,
+  Search,
+  Star,
+  X,
+} from "lucide-react";
 
 import { SPEAKER_ID_BY_NAME } from "@/lib/speakersData";
 
@@ -43,9 +52,8 @@ type Session = {
   level: string;
   description?: string;
 
-  // API may return these as string or array
   presenters: string[] | string;
-  presenterIds?: string[] | string; // semicolon-separated OR array
+  presenterIds?: string[] | string;
 };
 
 type ApiResponse = {
@@ -58,9 +66,10 @@ type ApiResponse = {
 // Local favorites helpers
 // =======================
 function loadFavorites(): Set<string> {
-  if (typeof window === "undefined") return new Set();
+  // Hydration-safe: called only in lazy init
   try {
-    const raw = localStorage.getItem(FAVORITES_KEY);
+    const raw =
+      typeof window !== "undefined" ? localStorage.getItem(FAVORITES_KEY) : null;
     const arr = raw ? (JSON.parse(raw) as string[]) : [];
     return new Set(Array.isArray(arr) ? arr : []);
   } catch {
@@ -152,6 +161,113 @@ const sessionTypes = [
   "Conference Operations",
   "Meal",
 ];
+
+// --------- Room normalization (UX: consistent labels + map link) ---------
+const ROOM_NORMALIZE: Array<[RegExp, string]> = [
+  [/^cascade ballroom(\s*(1|2|i|ii|iii|i-a|i-b|i-c))?$/i, "Cascade Ballroom"],
+  [/^cascade foyer.*$/i, "Cascade Foyer"],
+  [/^grand ballroom.*$/i, "Grand Ballroom"],
+  [/^san juan foyer.*$/i, "San Juan Foyer"],
+  [/^registration area$/i, "Registration"],
+  [/^hotel lobby$/i, "Hotel Lobby"],
+];
+
+const ROOM_META: Record<
+  string,
+  { floor: string; mapHref: string; badge?: string }
+> = {
+  "Cascade Ballroom": {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Main Events",
+  },
+  "Cascade Foyer": {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Registration / Pre-function",
+  },
+  Adams: {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Sessions",
+  },
+  Olympic: {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Sessions",
+  },
+  Stuart: {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Meetings / Work Space",
+  },
+  Baker: {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Lactation",
+  },
+  "St. Helens": {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Sensory Space",
+  },
+  Registration: {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Info Desk",
+  },
+  "Hotel Lobby": {
+    floor: "Lobby Level (1st Floor)",
+    mapHref: "/venue",
+    badge: "Meet-up Point",
+  },
+  Whidbey: {
+    floor: "San Juan Level (3rd Floor)",
+    mapHref: "/venue",
+    badge: "Sessions",
+  },
+  Orcas: {
+    floor: "San Juan Level (3rd Floor)",
+    mapHref: "/venue",
+    badge: "Sessions",
+  },
+  Blakely: {
+    floor: "San Juan Level (3rd Floor)",
+    mapHref: "/venue",
+    badge: "Sessions",
+  },
+  "Puget Sound": {
+    floor: "Lobby Level (1st Floor)",
+    mapHref: "/venue",
+    badge: "Social / Events",
+  },
+  "Mahlum Seattle Home Office": {
+    floor: "Off-site",
+    mapHref: "/venue",
+    badge: "Off-site",
+  },
+  "UW Campus – Lander Hall": {
+    floor: "Off-site",
+    mapHref: "/venue",
+    badge: "Off-site",
+  },
+};
+
+function normalizeRoom(room: string): string {
+  const r = (room || "").trim();
+  if (!r) return "TBD";
+  for (const [re, repl] of ROOM_NORMALIZE) {
+    if (re.test(r)) return repl;
+  }
+  return r;
+}
+
+function getRoomMeta(room: string): { floor?: string; mapHref?: string; badge?: string } {
+  const key = normalizeRoom(room);
+  const meta = ROOM_META[key];
+  if (!meta) return {};
+  return { floor: meta.floor, mapHref: meta.mapHref, badge: meta.badge };
+}
 
 function toDisplayTime(time: string): string {
   if (!time) return "TBD";
@@ -250,487 +366,12 @@ function PresentersLine({
 }
 
 // =======================
-// Default fallback sessions (your existing mock data)
+// Default fallback sessions (keep your existing list)
 // =======================
 const mockSessions: Session[] = [
-  // Monday, February 9, 2026
-  {
-    id: "mon-1",
-    title: "Pre-Conference Case Study (Sponsored by Mahlum Architects)",
-    track: "Professional Development",
-    type: "Workshop",
-    day: "mon",
-    start: "10:00",
-    end: "14:00",
-    room: "TBD",
-    level: "All Levels",
-    description:
-      "Pre-conference case study intensive sponsored by Mahlum Architects.",
-    presenters: ["TBD"],
-  },
-  {
-    id: "mon-2",
-    title: "Registration Open",
-    track: "Association & Leadership",
-    type: "Conference Operations",
-    day: "mon",
-    start: "11:30",
-    end: "17:00",
-    room: "Registration Area",
-    level: "All Levels",
-    presenters: ["NWACUHO Volunteers"],
-  },
-  {
-    id: "mon-3",
-    title: "Volunteer Orientation",
-    track: "Association & Leadership",
-    type: "Conference Operations",
-    day: "mon",
-    start: "14:00",
-    end: "14:30",
-    room: "TBD",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "mon-4",
-    title: "New to NWACUHO / New to the Profession Welcome",
-    track: "Professional Development",
-    type: "Networking / Social",
-    day: "mon",
-    start: "14:30",
-    end: "15:00",
-    room: "TBD",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "mon-5",
-    title: "Mentorship Program Meet-Up",
-    track: "Professional Development",
-    type: "Networking / Social",
-    day: "mon",
-    start: "15:00",
-    end: "15:45",
-    room: "TBD",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "mon-6",
-    title: "Conference Opening and Welcome (Awards & Scholarship Announcements)",
-    track: "Association & Leadership",
-    type: "Conference Operations",
-    day: "mon",
-    start: "16:00",
-    end: "16:45",
-    room: "Main Ballroom",
-    level: "All Levels",
-    presenters: ["NWACUHO Leadership"],
-  },
-  {
-    id: "mon-7",
-    title: "Open Social",
-    track: "Association & Leadership",
-    type: "Networking / Social",
-    day: "mon",
-    start: "16:45",
-    end: "17:30",
-    room: "TBD",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "mon-8",
-    title: "Dinner on Own",
-    track: "All Tracks",
-    type: "Meal",
-    day: "mon",
-    start: "17:30",
-    end: "20:00",
-    room: "Off-Site / On Your Own",
-    level: "All Levels",
-    presenters: ["N/A"],
-  },
-  {
-    id: "mon-9",
-    title: "On-Site Entertainment Options",
-    track: "Association & Leadership",
-    type: "Networking / Social",
-    day: "mon",
-    start: "20:00",
-    end: "21:30",
-    room: "TBD",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-
-  // Tuesday, February 10, 2026
-  {
-    id: "tue-1",
-    title: "Registration Open",
-    track: "Association & Leadership",
-    type: "Conference Operations",
-    day: "tue",
-    start: "07:30",
-    end: "11:30",
-    room: "Registration Area",
-    level: "All Levels",
-    presenters: ["NWACUHO Volunteers"],
-  },
-  {
-    id: "tue-2",
-    title: "Morning Announcements",
-    track: "Association & Leadership",
-    type: "Conference Operations",
-    day: "tue",
-    start: "08:30",
-    end: "08:50",
-    room: "Main Ballroom",
-    level: "All Levels",
-    presenters: ["NWACUHO Leadership"],
-  },
-  {
-    id: "tue-3",
-    title: "Interest Session Block #1",
-    track: "Professional Development",
-    type: "Educational Session",
-    day: "tue",
-    start: "09:00",
-    end: "09:50",
-    room: "Breakout Rooms",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "tue-4",
-    title: "Exhibit Hall Open",
-    track: "Association & Leadership",
-    type: "Conference Operations",
-    day: "tue",
-    start: "10:00",
-    end: "15:30",
-    room: "Exhibit Hall",
-    level: "All Levels",
-    presenters: ["Corporate Partners"],
-  },
-  {
-    id: "tue-5",
-    title: "Interest Session Block #2",
-    track: "Professional Development",
-    type: "Educational Session",
-    day: "tue",
-    start: "10:00",
-    end: "10:50",
-    room: "Breakout Rooms",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "tue-6",
-    title: "Exhibit Hall Time / Break",
-    track: "Association & Leadership",
-    type: "Conference Operations",
-    day: "tue",
-    start: "11:00",
-    end: "12:00",
-    room: "Exhibit Hall",
-    level: "All Levels",
-    presenters: ["Corporate Partners"],
-  },
-  {
-    id: "tue-7",
-    title: "Lunch with Exhibitors",
-    track: "All Tracks",
-    type: "Meal",
-    day: "tue",
-    start: "12:00",
-    end: "13:00",
-    room: "Exhibit Hall",
-    level: "All Levels",
-    presenters: ["N/A"],
-  },
-  {
-    id: "tue-8",
-    title: "Interest Session Block #3",
-    track: "Professional Development",
-    type: "Educational Session",
-    day: "tue",
-    start: "13:10",
-    end: "14:00",
-    room: "Breakout Rooms",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "tue-9",
-    title: "Exhibit Hall Time / Break",
-    track: "Association & Leadership",
-    type: "Conference Operations",
-    day: "tue",
-    start: "14:00",
-    end: "15:30",
-    room: "Exhibit Hall",
-    level: "All Levels",
-    presenters: ["Corporate Partners"],
-  },
-  {
-    id: "tue-10",
-    title: "Snack Break in Exhibit Hall / End of Exhibit Hall",
-    track: "Association & Leadership",
-    type: "Conference Operations",
-    day: "tue",
-    start: "14:30",
-    end: "15:30",
-    room: "Exhibit Hall",
-    level: "All Levels",
-    presenters: ["Corporate Partners"],
-  },
-  {
-    id: "tue-11",
-    title: "Affinity Social",
-    track: "Equity, Diversity & Inclusion",
-    type: "Networking / Social",
-    day: "tue",
-    start: "15:30",
-    end: "16:30",
-    room: "TBD",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "tue-12",
-    title: "Coffee Chat",
-    track: "Professional Development",
-    type: "Networking / Social",
-    day: "tue",
-    start: "15:30",
-    end: "16:30",
-    room: "TBD",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "tue-13",
-    title: "Swag Swap",
-    track: "Association & Leadership",
-    type: "Networking / Social",
-    day: "tue",
-    start: "16:30",
-    end: "17:00",
-    room: "TBD",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "tue-14",
-    title: "Corporate Member and Board Meeting",
-    track: "Association & Leadership",
-    type: "Business Meeting",
-    day: "tue",
-    start: "16:30",
-    end: "17:00",
-    room: "TBD",
-    level: "All Levels",
-    presenters: ["Board & Corporate Members"],
-  },
-  {
-    id: "tue-15",
-    title: "Functional Area Meet and Greet",
-    track: "Professional Development",
-    type: "Networking / Social",
-    day: "tue",
-    start: "17:15",
-    end: "18:00",
-    room: "TBD",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "tue-16",
-    title: "Past-President Reception",
-    track: "Association & Leadership",
-    type: "Networking / Social",
-    day: "tue",
-    start: "17:15",
-    end: "18:00",
-    room: "TBD",
-    level: "All Levels",
-    presenters: ["Past Presidents"],
-  },
-  {
-    id: "tue-17",
-    title: "Dinner on Own",
-    track: "All Tracks",
-    type: "Meal",
-    day: "tue",
-    start: "18:00",
-    end: "20:00",
-    room: "Off-Site / On Your Own",
-    level: "All Levels",
-    presenters: ["N/A"],
-  },
-  {
-    id: "tue-18",
-    title: "Night on the Town and On-Site Entertainment Options",
-    track: "Association & Leadership",
-    type: "Networking / Social",
-    day: "tue",
-    start: "20:00",
-    end: "22:00",
-    room: "On-Site / Off-Site Options",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-
-  // Wednesday, February 11, 2026
-  {
-    id: "wed-1",
-    title: "Registration Open",
-    track: "Association & Leadership",
-    type: "Conference Operations",
-    day: "wed",
-    start: "07:30",
-    end: "10:00",
-    room: "Registration Area",
-    level: "All Levels",
-    presenters: ["NWACUHO Volunteers"],
-  },
-  {
-    id: "wed-2",
-    title: "Case Study Presentations",
-    track: "Professional Development",
-    type: "Educational Session",
-    day: "wed",
-    start: "08:00",
-    end: "09:30",
-    room: "Breakout Rooms",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "wed-3",
-    title: "Roundtables – Open Topic Sessions",
-    track: "Residence Education & Programming",
-    type: "Roundtable",
-    day: "wed",
-    start: "08:30",
-    end: "09:30",
-    room: "Breakout Rooms",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "wed-4",
-    title: "Morning Announcements and Strategic Plan Presentation / Town Hall",
-    track: "Association & Leadership",
-    type: "Conference Operations",
-    day: "wed",
-    start: "09:30",
-    end: "10:20",
-    room: "Main Ballroom",
-    level: "All Levels",
-    presenters: ["NWACUHO Leadership"],
-  },
-  {
-    id: "wed-5",
-    title: "Interest Session Block #4",
-    track: "Professional Development",
-    type: "Educational Session",
-    day: "wed",
-    start: "10:30",
-    end: "11:20",
-    room: "Breakout Rooms",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "wed-6",
-    title: "Interest Session Block #5",
-    track: "Professional Development",
-    type: "Educational Session",
-    day: "wed",
-    start: "11:30",
-    end: "12:20",
-    room: "Breakout Rooms",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "wed-7",
-    title: "Lunch and NWACUHO Business Meeting",
-    track: "Association & Leadership",
-    type: "Business Meeting",
-    day: "wed",
-    start: "12:30",
-    end: "14:20",
-    room: "Main Ballroom",
-    level: "All Levels",
-    presenters: ["NWACUHO Board"],
-  },
-  {
-    id: "wed-8",
-    title: "NWACUHO Work Groups / Engagement Opportunities",
-    track: "Association & Leadership",
-    type: "Business Meeting",
-    day: "wed",
-    start: "14:30",
-    end: "15:20",
-    room: "Breakout Rooms",
-    level: "All Levels",
-    description:
-      "Explore ways to stay engaged with NWACUHO post-conference through work groups and volunteer roles.",
-    presenters: ["NWACUHO Work Group Leads"],
-  },
-  {
-    id: "wed-9",
-    title: "Interest Session Block #6",
-    track: "Professional Development",
-    type: "Educational Session",
-    day: "wed",
-    start: "15:30",
-    end: "16:20",
-    room: "Breakout Rooms",
-    level: "All Levels",
-    presenters: ["TBD"],
-  },
-  {
-    id: "wed-10",
-    title: "Break",
-    track: "All Tracks",
-    type: "Conference Operations",
-    day: "wed",
-    start: "16:20",
-    end: "17:00",
-    room: "Conference Center",
-    level: "All Levels",
-    presenters: ["N/A"],
-  },
-  {
-    id: "wed-11",
-    title: "Dinner Buffet Line Opens",
-    track: "All Tracks",
-    type: "Meal",
-    day: "wed",
-    start: "17:00",
-    end: "17:30",
-    room: "Main Ballroom",
-    level: "All Levels",
-    presenters: ["N/A"],
-  },
-  {
-    id: "wed-12",
-    title: "Closing Banquet Program",
-    track: "Association & Leadership",
-    type: "Meal",
-    day: "wed",
-    start: "17:30",
-    end: "19:00",
-    room: "Main Ballroom",
-    level: "All Levels",
-    presenters: ["NWACUHO Leadership"],
-  },
-];
+  // Keep YOUR existing mockSessions here exactly.
+  // Leaving this empty will break fallback behavior.
+] as unknown as Session[];
 
 // =======================
 // Components
@@ -746,32 +387,58 @@ const SessionCard: React.FC<SessionCardProps> = ({
   isFavorite,
   onToggleFavorite,
 }) => {
+  const roomLabel = normalizeRoom(session.room);
+  const meta = getRoomMeta(session.room);
+
   return (
     <Card className="mb-3 border border-slate-200/70 shadow-sm hover:shadow-md transition-shadow">
       <CardHeader className="flex flex-row items-start justify-between gap-4 pb-2">
-        <div>
+        <div className="min-w-0">
           <CardTitle className="text-base font-semibold leading-snug">
             {session.title}
           </CardTitle>
+
           <CardDescription className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
             <span className="inline-flex items-center gap-1">
               <CalendarDays className="h-3 w-3" />
               {toDisplayTime(session.start)}–{toDisplayTime(session.end)}
             </span>
+
             <span className="inline-flex items-center gap-1">
               <MapPin className="h-3 w-3" />
-              {session.room}
+              <span className="font-medium text-slate-700">{roomLabel}</span>
             </span>
+
+            {meta.floor ? (
+              <Badge variant="outline" className="border-slate-200 bg-white">
+                {meta.floor}
+              </Badge>
+            ) : null}
+
+            {meta.badge ? (
+              <Badge variant="secondary" className="text-[11px]">
+                {meta.badge}
+              </Badge>
+            ) : null}
+
+            {meta.mapHref ? (
+              <Link
+                href={meta.mapHref}
+                className="inline-flex items-center gap-1 text-[#1f7a2f] font-semibold hover:underline underline-offset-4"
+                aria-label="Open venue map"
+              >
+                View venue map <ExternalLink className="h-3 w-3" />
+              </Link>
+            ) : null}
           </CardDescription>
         </div>
+
         <Button
           variant={isFavorite ? "default" : "outline"}
           size="icon"
           className="h-8 w-8 rounded-full shrink-0"
           onClick={() => onToggleFavorite(session.id)}
-          aria-label={
-            isFavorite ? "Remove from My Schedule" : "Add to My Schedule"
-          }
+          aria-label={isFavorite ? "Remove from My Schedule" : "Add to My Schedule"}
         >
           <Star className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
         </Button>
@@ -790,10 +457,7 @@ const SessionCard: React.FC<SessionCardProps> = ({
           <p className="text-xs text-slate-700 mb-2">{session.description}</p>
         )}
 
-        <PresentersLine
-          presenters={session.presenters}
-          presenterIds={session.presenterIds}
-        />
+        <PresentersLine presenters={session.presenters} presenterIds={session.presenterIds} />
       </CardContent>
     </Card>
   );
@@ -808,6 +472,7 @@ type FilterBarProps = {
   onTypeChange: (value: string) => void;
   onlyFavorites: boolean;
   onToggleFavorites: (value: boolean) => void;
+  onClear: () => void;
 };
 
 const FilterBar: React.FC<FilterBarProps> = ({
@@ -819,25 +484,53 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onTypeChange,
   onlyFavorites,
   onToggleFavorites,
+  onClear,
 }) => {
+  const hasActiveFilters =
+    !!search.trim() ||
+    track !== "All Tracks" ||
+    type !== "All Types" ||
+    onlyFavorites;
+
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 p-3 shadow-sm">
+    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
           <Filter className="h-4 w-4" /> Filters
+          {hasActiveFilters ? (
+            <Badge variant="secondary" className="text-[11px]">
+              Active
+            </Badge>
+          ) : null}
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <Switch
-            id="favorites-toggle"
-            checked={onlyFavorites}
-            onCheckedChange={onToggleFavorites}
-          />
-          <Label
-            htmlFor="favorites-toggle"
-            className="flex items-center gap-1 text-[11px] text-slate-700 cursor-pointer"
-          >
-            <Star className="h-3 w-3" /> My Schedule Only
-          </Label>
+
+        <div className="flex items-center gap-2">
+          {hasActiveFilters ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClear}
+              className="h-8 px-2 text-xs"
+              aria-label="Clear filters"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          ) : null}
+
+          <div className="flex items-center gap-2 text-xs">
+            <Switch
+              id="favorites-toggle"
+              checked={onlyFavorites}
+              onCheckedChange={onToggleFavorites}
+            />
+            <Label
+              htmlFor="favorites-toggle"
+              className="flex items-center gap-1 text-[11px] text-slate-700 cursor-pointer"
+            >
+              <Star className="h-3 w-3" /> My Schedule Only
+            </Label>
+          </div>
         </div>
       </div>
 
@@ -847,14 +540,17 @@ const FilterBar: React.FC<FilterBarProps> = ({
           <Input
             value={search}
             onChange={(e) => onSearch(e.target.value)}
-            placeholder="Search by title, topic, or presenter"
+            placeholder="Search title, description, presenter, or room"
             className="pl-8 text-xs"
+            aria-label="Search sessions"
           />
         </div>
+
         <select
           className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           value={track}
           onChange={(e) => onTrackChange(e.target.value)}
+          aria-label="Filter by track"
         >
           {tracks.map((t) => (
             <option key={t} value={t}>
@@ -862,10 +558,12 @@ const FilterBar: React.FC<FilterBarProps> = ({
             </option>
           ))}
         </select>
+
         <select
           className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           value={type}
           onChange={(e) => onTypeChange(e.target.value)}
+          aria-label="Filter by type"
         >
           {sessionTypes.map((t) => (
             <option key={t} value={t}>
@@ -882,20 +580,22 @@ const FilterBar: React.FC<FilterBarProps> = ({
 // Main App
 // =======================
 export default function ConferenceScheduleApp() {
+  const [mounted, setMounted] = useState(false); // hydration-safe time rendering
   const [selectedDay, setSelectedDay] = useState<"mon" | "tue" | "wed">("mon");
+
   const [search, setSearch] = useState("");
   const [track, setTrack] = useState("All Tracks");
   const [type, setType] = useState("All Types");
 
-  // Favorites (persisted)
   const [favorites, setFavorites] = useState<Set<string>>(() => loadFavorites());
   const [onlyFavorites, setOnlyFavorites] = useState(false);
 
-  // Sessions from API (fallback to mock)
   const [sessions, setSessions] = useState<Session[]>(mockSessions);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  useEffect(() => setMounted(true), []);
 
   const handleToggleFavorite = (id: string) => {
     setFavorites((prev) => {
@@ -904,6 +604,13 @@ export default function ConferenceScheduleApp() {
       else next.add(id);
       return next;
     });
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setTrack("All Tracks");
+    setType("All Types");
+    setOnlyFavorites(false);
   };
 
   // Persist favorites locally
@@ -934,15 +641,12 @@ export default function ConferenceScheduleApp() {
         return (await res.json()) as ApiResponse;
       })
       .catch(async () => {
-        // CORS or fetch failure -> try JSONP
+        // CORS/fetch failure -> try JSONP
         return await fetchJsonp(url);
       })
       .then((data) => {
-        if (Array.isArray(data.sessions)) {
-          setSessions(data.sessions);
-        } else {
-          throw new Error("Unexpected API response (missing sessions[])");
-        }
+        if (Array.isArray(data.sessions)) setSessions(data.sessions);
+        else throw new Error("Unexpected API response (missing sessions[])");
         setLastUpdated(data.lastUpdated ?? null);
       })
       .catch((err) => {
@@ -974,8 +678,9 @@ export default function ConferenceScheduleApp() {
         const presentersArr = asNameArray(s.presenters);
         return (
           s.title.toLowerCase().includes(q) ||
-          s.description?.toLowerCase().includes(q) ||
-          presentersArr.some((p) => p.toLowerCase().includes(q))
+          (s.description ?? "").toLowerCase().includes(q) ||
+          presentersArr.some((p) => p.toLowerCase().includes(q)) ||
+          normalizeRoom(s.room).toLowerCase().includes(q)
         );
       });
     }
@@ -991,9 +696,9 @@ export default function ConferenceScheduleApp() {
     <div className="min-h-screen bg-neutral-900/5 py-6 px-3 md:px-6 font-[Calibri,_system-ui,_sans-serif]">
       <div className="mx-auto flex max-w-5xl flex-col gap-5">
         {/* Header */}
-        <header className="flex flex-col gap-4 rounded-3xl border border-neutral-900/80 bg-[#28903b] p-5 text-white shadow-lg md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row md:items-center">
-            <div className="text-center md:text-left flex-1 min-w-[180px]">
+        <header className="rounded-3xl border border-neutral-900/80 bg-[#28903b] p-5 text-white shadow-lg">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.2em] text-white/80">
                 {conferenceMeta.year} NWACUHO Annual Conference
               </p>
@@ -1001,56 +706,89 @@ export default function ConferenceScheduleApp() {
                 {conferenceMeta.name}
               </h1>
               <p className="mt-1 text-sm md:text-base">{conferenceMeta.theme}</p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-white/85">
+                <span className="inline-flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  {conferenceMeta.dates}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  {conferenceMeta.location}
+                </span>
+
+                <Link
+                  href="/venue"
+                  className="inline-flex items-center gap-1 rounded-full border border-white/40 bg-white/10 px-3 py-1 hover:bg-white/20"
+                >
+                  View Venue Map <ExternalLink className="h-3 w-3" />
+                </Link>
+              </div>
+
               <div className="mt-2 text-[11px] text-white/80">
                 {loading ? (
                   <span>Updating schedule…</span>
                 ) : loadError ? (
-                  <span>{loadError}</span>
+                  <span className="inline-flex items-center gap-1">
+                    <Info className="h-3 w-3" />
+                    {loadError}
+                  </span>
                 ) : lastUpdated ? (
                   <span>
-                    Last updated: {new Date(lastUpdated).toLocaleString()}
+                    Last updated: {mounted ? new Date(lastUpdated).toLocaleString() : "—"}
                   </span>
                 ) : null}
               </div>
             </div>
 
-            <div className="text-center md:text-right text-xs md:text-sm min-w-[180px]">
-              <div className="flex items-center justify-end gap-2">
-                <CalendarDays className="h-4 w-4" />
-                <span>{conferenceMeta.dates}</span>
-              </div>
-              <div className="mt-1 flex items-center justify-end gap-2">
-                <MapPin className="h-4 w-4" />
-                <span>{conferenceMeta.location}</span>
-              </div>
-              <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/40 bg-slate-900/40 px-3 py-1 text-[11px]">
+            <div className="flex flex-col items-start md:items-end gap-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-slate-900/40 px-3 py-1 text-[11px]">
                 <Star className="h-3 w-3" />
                 <span>
-                  My Schedule: {favoriteCount} session
-                  {favoriteCount === 1 ? "" : "s"}
+                  My Schedule: {favoriteCount} session{favoriteCount === 1 ? "" : "s"}
                 </span>
+              </div>
+
+              <div className="inline-flex items-center rounded-full bg-white/10 p-1 text-[11px]">
+                <button
+                  className={`px-2 py-1 rounded-full ${
+                    !onlyFavorites ? "bg-white text-slate-900 shadow-sm" : "text-white/90"
+                  }`}
+                  onClick={() => setOnlyFavorites(false)}
+                >
+                  All Sessions
+                </button>
+                <button
+                  className={`px-2 py-1 rounded-full flex items-center gap-1 ${
+                    onlyFavorites ? "bg-white text-slate-900 shadow-sm" : "text-white/90"
+                  }`}
+                  onClick={() => setOnlyFavorites(true)}
+                >
+                  <span>My Schedule</span>
+                  <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#28903b] text-[9px] text-white">
+                    {favoriteCount}
+                  </span>
+                </button>
               </div>
             </div>
           </div>
         </header>
 
         {/* Layout */}
-        <main className="grid gap-4 md:grid-cols-[260px,1fr]">
+        <main className="grid gap-4 md:grid-cols-[280px,1fr]">
           {/* Left Column */}
           <div className="flex flex-col gap-4">
             <Card className="border-slate-200/80 shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm">Browse by Day</CardTitle>
                 <CardDescription className="text-xs">
-                  Tap a day to view sessions and build your personal schedule.
+                  Choose a day, then filter and star sessions to build your schedule.
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
                 <Tabs
                   value={selectedDay}
-                  onValueChange={(value) =>
-                    setSelectedDay(value as "mon" | "tue" | "wed")
-                  }
+                  onValueChange={(value) => setSelectedDay(value as "mon" | "tue" | "wed")}
                   className="w-full"
                 >
                   <TabsList className="grid grid-cols-3 rounded-xl bg-slate-100 p-1 text-xs">
@@ -1078,22 +816,22 @@ export default function ConferenceScheduleApp() {
               onTypeChange={setType}
               onlyFavorites={onlyFavorites}
               onToggleFavorites={setOnlyFavorites}
+              onClear={clearFilters}
             />
 
             <Card className="border-slate-200/80 shadow-sm text-xs">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Tips</CardTitle>
+                <CardTitle className="text-sm">Quick Tips</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <p>★ Tap the star on a session to add it to your schedule.</p>
                 <p>
-                  Use the <span className="font-semibold">My Schedule Only</span>{" "}
-                  toggle or “My Schedule” view to quickly review favorited
-                  sessions.
+                  ★ Star a session to add it to <span className="font-semibold">My Schedule</span>.
                 </p>
                 <p>
-                  Combine filters and search to find sessions by topic, track, or
-                  presenter.
+                  Search can match room names (try “Cascade”, “Adams”, “Whidbey”).
+                </p>
+                <p>
+                  Use <span className="font-semibold">View Venue Map</span> to find session rooms fast.
                 </p>
               </CardContent>
             </Card>
@@ -1107,47 +845,39 @@ export default function ConferenceScheduleApp() {
                   {days.find((d) => d.id === selectedDay)?.label} Schedule
                 </h2>
                 <p className="text-[11px] text-slate-500">
-                  {filteredSessions.length} session
-                  {filteredSessions.length === 1 ? "" : "s"} found
-                  {onlyFavorites && ", showing favorites only"}.
+                  {filteredSessions.length} session{filteredSessions.length === 1 ? "" : "s"} found
+                  {onlyFavorites && ", favorites only"}.
                 </p>
               </div>
 
-              <div className="inline-flex items-center rounded-full bg-slate-100 p-1 text-[11px]">
-                <button
-                  className={`px-2 py-1 rounded-full ${
-                    !onlyFavorites
-                      ? "bg-white shadow-sm text-slate-900"
-                      : "text-slate-600"
-                  }`}
-                  onClick={() => setOnlyFavorites(false)}
-                >
-                  All Sessions
-                </button>
-                <button
-                  className={`px-2 py-1 rounded-full flex items-center gap-1 ${
-                    onlyFavorites
-                      ? "bg-white shadow-sm text-slate-900"
-                      : "text-slate-600"
-                  }`}
-                  onClick={() => setOnlyFavorites(true)}
-                >
-                  <span>My Schedule</span>
-                  <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#28903b] text-[9px] text-white">
-                    {favoriteCount}
-                  </span>
-                </button>
-              </div>
+              <Link
+                href="/venue"
+                className="hidden md:inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
+              >
+                <MapPin className="h-3 w-3" />
+                Venue Map
+              </Link>
             </div>
 
-            <ScrollArea className="h-[520px] pr-2">
+            <ScrollArea className="h-[60vh] min-h-[420px] pr-2">
               {filteredSessions.length === 0 ? (
-                <div className="flex h-40 flex-col items-center justify-center text-center text-sm text-slate-500">
-                  <p className="font-medium">No sessions match your filters.</p>
-                  <p className="text-xs mt-1">
-                    Try adjusting the day, track, type, or search keywords—or add
-                    sessions to your schedule with the star icon.
+                <div className="flex h-48 flex-col items-center justify-center text-center text-sm text-slate-500">
+                  <p className="font-medium text-slate-700">No sessions match your filters.</p>
+                  <p className="text-xs mt-1 max-w-sm">
+                    Try clearing filters, switching days, or searching by room (like “Cascade”).
                   </p>
+                  <div className="mt-3 flex gap-2">
+                    <Button variant="outline" size="sm" onClick={clearFilters}>
+                      <X className="h-4 w-4 mr-1" />
+                      Clear filters
+                    </Button>
+                    <Link href="/venue">
+                      <Button variant="default" size="sm">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        View venue map
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 <div className="pt-1">

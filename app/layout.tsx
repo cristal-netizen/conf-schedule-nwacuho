@@ -23,11 +23,14 @@ export const metadata = {
     statusBarStyle: "default",
     title: "NWACUHO",
   },
-  themeColor: "#28903b",
   icons: {
     icon: "/icons/icon-192.png",
     apple: "/icons/apple-touch-icon.png",
   },
+};
+
+export const viewport = {
+  themeColor: "#28903b",
 };
 
 export default function RootLayout({

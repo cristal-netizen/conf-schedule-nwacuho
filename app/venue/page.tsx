@@ -1,30 +1,75 @@
+<p className="text-xs text-red-600">VENUE VERSION: 4</p>
+
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+export const metadata = {
+  title: "Venue",
+};
+
+export const viewport = {
+  themeColor: "#28903b",
+};
+
 const rooms = [
   {
-    name: "Main Ballroom",
-    use: "Opening, Business Meeting, Banquet",
-    floor: "Level 2",
+    name: "Cascade Ballroom",
+    use: "Conference opening/closing, large programs, exhibitor hall & meal functions (see schedule for specifics)",
+    floor: "Mezzanine Level (2nd Floor)",
   },
   {
-    name: "Breakout Rooms A–D",
-    use: "Interest Sessions & Roundtables",
-    floor: "Level 2 & 3",
+    name: "Cascade Foyer North",
+    use: "Registration open / pre-function gathering",
+    floor: "Mezzanine Level (2nd Floor)",
+  },
+  { name: "Adams", use: "Educational sessions & workshops", floor: "Mezzanine Level (2nd Floor)" },
+  {
+    name: "Olympic",
+    use: "Educational sessions, mentoring/social meet-ups, volunteer orientation",
+    floor: "Mezzanine Level (2nd Floor)",
+  },
+  { name: "Baker", use: "Lactation space", floor: "Mezzanine Level (2nd Floor)" },
+  { name: "St. Helens", use: "Sensory recovery space", floor: "Mezzanine Level (2nd Floor)" },
+  { name: "Stuart", use: "Open work space; some meetings", floor: "Mezzanine Level (2nd Floor)" },
+  { name: "Loft", use: "Past President Reception", floor: "Mezzanine Level (2nd Floor)" },
+  {
+    name: "Puget Sound",
+    use: "Social events (Game Night, Meet & Greet, etc.)",
+    floor: "Lobby Level (1st Floor)",
   },
   {
-    name: "Exhibit Hall",
-    use: "Exhibitor Fair, Snacks, Lunch",
-    floor: "Level 1",
+    name: "Hotel Lobby",
+    use: "Pre-conference tour departures / meetup point",
+    floor: "Lobby Level (1st Floor)",
   },
   {
-    name: "Registration Area",
-    use: "Check-in, Info Desk",
-    floor: "Lobby",
+    name: "Whidbey",
+    use: "Roundtables, trivia, and other evening programming",
+    floor: "San Juan Level (3rd Floor)",
   },
   {
-    name: "Affinity & Social Spaces",
-    use: "Affinity Socials, Coffee Chats",
+    name: "Orcas",
+    use: "Breakouts / evening programming (sometimes combined rooms)",
+    floor: "San Juan Level (3rd Floor)",
+  },
+  {
+    name: "Blakely",
+    use: "Educational sessions & affinity/social programming",
+    floor: "San Juan Level (3rd Floor)",
+  },
+  {
+    name: "Mahlum Seattle Home Office",
+    use: "Off-site pre-conference case study",
+    floor: "Off-site",
+  },
+  {
+    name: "UW Campus – Lander Hall",
+    use: "Off-site UW facilities tour stop",
+    floor: "Off-site",
+  },
+  {
+    name: "Various Locations",
+    use: "Meals/breaks and events not in a single room",
     floor: "Various",
   },
 ];
@@ -38,66 +83,59 @@ export default function VenuePage() {
             Venue Map & Rooms
           </h1>
           <p className="mt-1 text-sm md:text-base text-white/90">
-            Find your way around the conference venue, session rooms, and
-            exhibitor spaces.
+            Find your way around the conference venue, session rooms, and exhibitor spaces.
           </p>
         </header>
 
         <Card className="border-slate-200/80 shadow-sm bg-white/95">
           <CardHeader>
-            <CardTitle className="text-sm font-semibold">
-              Venue Overview Map
-            </CardTitle>
+            <CardTitle className="text-sm font-semibold">Venue Overview Map</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="relative w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 aspect-[4/3] flex items-center justify-center">
-              {/* Replace this with your real floorplan image */}
-              {/* Place a file at: public/venue-map.png */}
+            <a
+              href="/westin-seattle-meeting-space.png"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block overflow-hidden rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#28903b] focus-visible:ring-offset-2"
+              aria-label="Open the venue map full size in a new tab"
+              title="Open full-size map"
+            >
               <Image
-                src="/venue-map.png"
-                alt="Conference venue map"
-                fill
-                className="object-contain"
+                src="/westin-seattle-meeting-space.png"
+                alt="The Westin Seattle meeting space map showing Grand Level, San Juan Level, Mezzanine Level, Lobby Level, and Westlake Level rooms"
+                width={1400}
+                height={1050}
+                className="h-auto w-full object-contain"
+                priority
               />
-            </div>
-            <p className="text-xs text-slate-500">
-              This map is a placeholder. Once you have the final floorplan or
-              hotel/conference center map, save it as{" "}
-              <code className="rounded bg-slate-100 px-1">public/venue-map.png</code>{" "}
-              and it will appear here automatically.
-            </p>
+            </a>
+
+            <p className="text-xs text-slate-500">Tap or click the map to view it full size.</p>
           </CardContent>
         </Card>
 
         <Card className="border-slate-200/80 shadow-sm bg-white/95">
           <CardHeader>
-            <CardTitle className="text-sm font-semibold">
-              Key Rooms & Spaces
-            </CardTitle>
+            <CardTitle className="text-sm font-semibold">Key Rooms & Spaces</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
+            <p className="text-xs text-slate-500">Rooms loaded: {rooms.length}</p>
+
             {rooms.map((room) => (
               <div
                 key={room.name}
                 className="flex flex-col border-b border-slate-100 pb-2 last:border-0 last:pb-0"
               >
-                <span className="font-semibold text-slate-900">
-                  {room.name}
-                </span>
-                <span className="text-xs text-slate-600">
-                  {room.use}
-                </span>
-                <span className="text-xs text-slate-500">
-                  Location: {room.floor}
-                </span>
+                <span className="font-semibold text-slate-900">{room.name}</span>
+                <span className="text-xs text-slate-600">{room.use}</span>
+                <span className="text-xs text-slate-500">Location: {room.floor}</span>
               </div>
             ))}
           </CardContent>
         </Card>
 
         <p className="text-xs text-slate-500 text-center mt-2">
-          Room assignments for individual sessions will be listed on the
-          schedule when finalized.
+          Room assignments for individual sessions will be listed on the schedule when finalized.
         </p>
       </div>
     </main>

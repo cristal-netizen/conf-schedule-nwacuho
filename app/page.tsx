@@ -1,7 +1,7 @@
-"use client";
+<p className="text-xs text-red-600">SCHEDULE BUILD: v4</p>
 
-import ConferenceScheduleApp from "./ConferenceScheduleApp";
+import ClientOnlySchedule from "./ClientOnly";
 
 export default function Page() {
-  return <ConferenceScheduleApp />;
+  return <ClientOnlySchedule />;
 }
