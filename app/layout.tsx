@@ -67,6 +67,13 @@ export default function RootLayout({
               >
                 Venue Map
               </Link>
+              <Link
+  href="/accessibility"
+  className="text-slate-700 hover:text-[#28903b]"
+>
+  Accessibility
+</Link>
+
             </div>
           </nav>
         </header>

@@ -2,7 +2,7 @@ self.addEventListener("message", (event) => {
   if (event?.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
 
-const CACHE_NAME = "nwacuho-schedule-v5";
+const CACHE_NAME = "nwacuho-schedule-v6";
 const ASSETS = ["/", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
