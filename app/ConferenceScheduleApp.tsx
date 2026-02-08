@@ -766,13 +766,15 @@ const handleToggleFavorite = (session: Session) => {
 // Load schedule from Apps Script (JSONP to avoid CORS)
 // =======================
 useEffect(() => {
-  const url = APPS_SCRIPT_URL?.trim();
-  if (!url) return;
+  const SCHEDULE_URL =
+  "https://docs.google.com/spreadsheets/d/1z2FDi4LpFtCzLdjHiOY_DRL76X8ehiQwcEUwkjU79_I/gviz/tq?tqx=out:json&sheet=Sessions";
+
+  if (!SCHEDULE_URL) return;
 
   setLoading(true);
   setLoadError(null);
 
-  fetchJsonp(url)
+  fetchJsonp(SCHEDULE_URL)
     .then((data) => {
       if (Array.isArray(data.sessions)) {
         setSessions(data.sessions);
