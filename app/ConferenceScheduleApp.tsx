@@ -762,17 +762,16 @@ const handleToggleFavorite = (session: Session) => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // =======================
+// =======================
 // Load schedule from Apps Script (JSONP to avoid CORS)
 // =======================
 useEffect(() => {
   const url = APPS_SCRIPT_URL?.trim();
-  if (!url || url.includes("https://script.google.com/macros/s/AKfycby0pPaSuE0XhIwAqencFZTTEYtFT57wB648KDppSymJA4CSb1HHeQHnBPX1ZMbteZUy/exec")) return;
+  if (!url) return;
 
   setLoading(true);
   setLoadError(null);
 
-  // Use JSONP first to avoid CORS issues with script.google.com
   fetchJsonp(url)
     .then((data) => {
       if (Array.isArray(data.sessions)) {
