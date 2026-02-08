@@ -86,6 +86,117 @@ function saveFavorites(favs: Set<string>) {
 }
 
 // =======================
+// Attendance logging (to Google Sheet via Apps Script)
+// =======================
+const ANON_KEY = "nwacuho:anonId:v1";
+const QUEUE_KEY = "nwacuho:attendanceQueue:v1";
+
+type AttendanceEvent = {
+  ts: number;
+  anonId: string;
+  sessionId: string;
+  action: "add" | "remove";
+  sessionTitle: string;
+  day: Session["day"];
+  start: string;
+  end: string;
+  room: string;
+  userAgent?: string;
+};
+
+function getAnonId(): string {
+  try {
+    let id = localStorage.getItem(ANON_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(ANON_KEY, id);
+    }
+    return id;
+  } catch {
+    return `anon_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  }
+}
+
+function readQueue(): AttendanceEvent[] {
+  try {
+    const raw = localStorage.getItem(QUEUE_KEY);
+    const arr = raw ? (JSON.parse(raw) as AttendanceEvent[]) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeQueue(queue: AttendanceEvent[]) {
+  try {
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+  } catch {
+    // ignore
+  }
+}
+
+function queueAttendanceEvent(evt: AttendanceEvent) {
+  const q = readQueue();
+  q.push(evt);
+  writeQueue(q);
+}
+
+function trySendBeacon(url: string, payload: object): boolean {
+  try {
+    if (!("sendBeacon" in navigator)) return false;
+    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    return navigator.sendBeacon(url, blob);
+  } catch {
+    return false;
+  }
+}
+
+async function postAttendanceEvent(url: string, evt: AttendanceEvent) {
+  const payload = {
+    anonId: evt.anonId,
+    sessionId: evt.sessionId,
+    action: evt.action,
+    sessionTitle: evt.sessionTitle,
+    day: evt.day,
+    start: evt.start,
+    end: evt.end,
+    room: evt.room,
+    userAgent: evt.userAgent || "",
+  };
+
+  // Best effort: avoids CORS issues and works during unload
+  if (trySendBeacon(url, payload)) return;
+
+  // Fallback: opaque response is fine; we only need it to reach Apps Script
+  await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    mode: "no-cors",
+    keepalive: true,
+  });
+}
+
+async function flushAttendanceQueue(url: string) {
+  if (!url) return;
+  if (typeof window === "undefined") return;
+  if (!navigator.onLine) return;
+
+  const queue = readQueue();
+  if (!queue.length) return;
+
+  const remaining: AttendanceEvent[] = [];
+  for (const evt of queue) {
+    try {
+      await postAttendanceEvent(url, evt);
+    } catch {
+      remaining.push(evt);
+    }
+  }
+  writeQueue(remaining);
+}
+
+// =======================
 // JSONP fallback (if CORS blocks fetch)
 // =======================
 function fetchJsonp(url: string, timeoutMs = 15000): Promise<ApiResponse> {
@@ -379,7 +490,7 @@ const mockSessions: Session[] = [
 type SessionCardProps = {
   session: Session;
   isFavorite: boolean;
-  onToggleFavorite: (id: string) => void;
+  onToggleFavorite: (session: Session) => void;
 };
 
 const SessionCard: React.FC<SessionCardProps> = ({
@@ -437,7 +548,7 @@ const SessionCard: React.FC<SessionCardProps> = ({
           variant={isFavorite ? "default" : "outline"}
           size="icon"
           className="h-8 w-8 rounded-full shrink-0"
-          onClick={() => onToggleFavorite(session.id)}
+          onClick={() => onToggleFavorite(session)}
           aria-label={isFavorite ? "Remove from My Schedule" : "Add to My Schedule"}
         >
           <Star className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
@@ -597,14 +708,38 @@ export default function ConferenceScheduleApp() {
 
   useEffect(() => setMounted(true), []);
 
-  const handleToggleFavorite = (id: string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
+const handleToggleFavorite = (session: Session) => {
+  const id = session.id;
+
+  setFavorites((prev) => {
+    const next = new Set(prev);
+
+    const willAdd = !next.has(id);
+    if (willAdd) next.add(id);
+    else next.delete(id);
+
+    const evt: AttendanceEvent = {
+      ts: Date.now(),
+      anonId: getAnonId(),
+      sessionId: id,
+      action: willAdd ? "add" : "remove",
+      sessionTitle: session.title,
+      day: session.day,
+      start: session.start,
+      end: session.end,
+      room: normalizeRoom(session.room),
+      userAgent: navigator.userAgent,
+    };
+
+    if (!navigator.onLine) {
+      queueAttendanceEvent(evt);
+    } else {
+      postAttendanceEvent(APPS_SCRIPT_URL, evt).catch(() => queueAttendanceEvent(evt));
+    }
+
+    return next;
+  });
+};
 
   const clearFilters = () => {
     setSearch("");
@@ -665,6 +800,14 @@ export default function ConferenceScheduleApp() {
       return next.size === prev.size ? prev : next;
     });
   }, [sessions]);
+
+  useEffect(() => {
+  flushAttendanceQueue(APPS_SCRIPT_URL);
+
+  const onOnline = () => flushAttendanceQueue(APPS_SCRIPT_URL);
+  window.addEventListener("online", onOnline);
+  return () => window.removeEventListener("online", onOnline);
+}, []);
 
   const filteredSessions = useMemo(() => {
     let list = sessions.filter((s) => s.day === selectedDay);
