@@ -762,35 +762,33 @@ const handleToggleFavorite = (session: Session) => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // Load schedule from Apps Script (try fetch, then JSONP fallback)
-  useEffect(() => {
-    const url = APPS_SCRIPT_URL?.trim();
-    if (!url || url.includes("PASTE_YOUR")) return;
+  // =======================
+// Load schedule from Apps Script (JSONP to avoid CORS)
+// =======================
+useEffect(() => {
+  const url = APPS_SCRIPT_URL?.trim();
+  if (!url || url.includes("https://script.google.com/macros/s/AKfycby0pPaSuE0XhIwAqencFZTTEYtFT57wB648KDppSymJA4CSb1HHeQHnBPX1ZMbteZUy/exec")) return;
 
-    setLoading(true);
-    setLoadError(null);
+  setLoading(true);
+  setLoadError(null);
 
-    fetch(url)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as ApiResponse;
-      })
-      .catch(async () => {
-        // CORS/fetch failure -> try JSONP
-        return await fetchJsonp(url);
-      })
-      .then((data) => {
-        if (Array.isArray(data.sessions)) setSessions(data.sessions);
-        else throw new Error("Unexpected API response (missing sessions[])");
+  // Use JSONP first to avoid CORS issues with script.google.com
+  fetchJsonp(url)
+    .then((data) => {
+      if (Array.isArray(data.sessions)) {
+        setSessions(data.sessions);
         setLastUpdated(data.lastUpdated ?? null);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoadError("Could not load schedule. Showing the built-in schedule.");
-        setSessions(mockSessions);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+      } else {
+        throw new Error("Unexpected API response (missing sessions[])");
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      setLoadError("Could not load schedule. Showing the built-in schedule.");
+      setSessions(mockSessions);
+    })
+    .finally(() => setLoading(false));
+}, []);
 
   // Optional: prune favorites that don't exist in the current sessions list
   useEffect(() => {
