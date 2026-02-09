@@ -148,26 +148,64 @@ export default function Page() {
           </CardContent>
         </Card>
 
-        {/* Discounts */}
-        <Card className="border-slate-200/80 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Local Coffee & Breakfast Discounts</CardTitle>
-            <CardDescription className="text-xs">We’ll update this list as locations are confirmed.</CardDescription>
-          </CardHeader>
+      {/* Discounts */}
+<Card className="border-slate-200/80 shadow-sm">
+  <CardHeader className="pb-3">
+    <CardTitle className="text-sm">Local Coffee & Breakfast Discounts</CardTitle>
+    <CardDescription className="text-xs">
+      We’ll update this list as locations are confirmed.
+    </CardDescription>
+  </CardHeader>
 
-          <CardContent className="space-y-2 text-sm">
-            <div className="rounded-2xl border border-slate-200 bg-white p-3">
-              <p className="text-sm text-slate-800">
-                <span className="font-semibold">Looking for a great deal on coffee or breakfast?</span> These local
-                businesses have some deals available for NWACUHO attendees. Just show them your conference badge for
-                confirmation.
-              </p>
-              <p className="mt-2 text-xs text-slate-600">
-                Discount locations will appear here once finalized.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+  <CardContent className="space-y-2 text-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-3 space-y-3">
+      <p className="text-slate-800">
+        <span className="font-semibold">Looking for a great deal on coffee or breakfast?</span>{" "}
+        These local businesses have discounts available for NWACUHO attendees. Just show your
+        conference badge for confirmation.
+      </p>
+
+      <div className="text-xs text-slate-600 space-y-2">
+        <h3 className="font-semibold text-slate-700">February 9–11</h3>
+
+        <p>
+          <strong>Westin Hotel:</strong> Relish Bistro, Relish to Go, 1900 FIFTH Bar + Lounge  
+          <br />
+          NWACUHO attendees can receive a 10% discount at all on-property Westin locations.
+          Just show your conference badge.
+        </p>
+
+        <p>
+          <strong>Taz Matcha</strong> (410 Stewart St, Seattle, WA 98101)  
+          <br />
+          NWACUHO attendees can receive a 10% discount with promo code <strong>NWA</strong>.
+        </p>
+
+        <h3 className="font-semibold text-slate-700 pt-2">February 10</h3>
+
+        <p>
+          <strong>Moto Pizza</strong> (Belltown – 3131 Western Ave Ste. 302, Seattle, WA 98121)  
+          <br />
+          From 6:00–9:00 PM, NWACUHO attendees can enjoy Moto Pizza Happy Hour discounts,
+          including a dinner-size pizza and two drinks for $20 (Crab Pizza excluded).
+          A wide variety of beers, wines, canned cocktails, and sodas are available.
+          Moto Pizza is located in the same building as Hourglass Escapes, our Tuesday Night
+          on the Town location.  
+          <br />
+          Please order online ahead of time at{" "}
+          <a
+            href="https://www.motopizza.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            motopizza.com
+          </a>.
+        </p>
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
         {/* Back to schedule */}
         <div className="flex justify-center">
