@@ -33,19 +33,28 @@ import { Label } from "@/components/ui/label";
 // =======================
 // Config (EDIT THESE)
 // =======================
+
+// Attendance tracking (write events + counts) via Apps Script Web App
 const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycby0pPaSuE0XhIwAqencFZTTEYtFT57wB648KDppSymJA4CSb1HHeQHnBPX1ZMbteZUy/exec";
+
+// Schedule loading (read Sessions) via Google Sheets GVIZ endpoint (NO JSONP)
+const SCHEDULE_URL =
+  "https://docs.google.com/spreadsheets/d/1z2FDi4LpFtCzLdjHiOY_DRL76X8ehiQwcEUwkjU79_I/gviz/tq?tqx=out:json&sheet=Sessions";
+
 const FAVORITES_KEY = "nwacuho:favorites:v1";
 
 // =======================
 // Types
 // =======================
+type DayId = "mon" | "tue" | "wed";
+
 type Session = {
   id: string;
   title: string;
   track: string;
   type: string;
-  day: "mon" | "tue" | "wed";
+  day: DayId;
   start: string; // "HH:MM"
   end: string; // "HH:MM"
   room: string;
@@ -66,7 +75,6 @@ type ApiResponse = {
 // Local favorites helpers
 // =======================
 function loadFavorites(): Set<string> {
-  // Hydration-safe: called only in lazy init
   try {
     const raw =
       typeof window !== "undefined" ? localStorage.getItem(FAVORITES_KEY) : null;
@@ -97,7 +105,7 @@ type AttendanceEvent = {
   sessionId: string;
   action: "add" | "remove";
   sessionTitle: string;
-  day: Session["day"];
+  day: DayId;
   start: string;
   end: string;
   room: string;
@@ -144,7 +152,9 @@ function queueAttendanceEvent(evt: AttendanceEvent) {
 function trySendBeacon(url: string, payload: object): boolean {
   try {
     if (!("sendBeacon" in navigator)) return false;
-    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(payload)], {
+      type: "application/json",
+    });
     return navigator.sendBeacon(url, blob);
   } catch {
     return false;
@@ -197,42 +207,83 @@ async function flushAttendanceQueue(url: string) {
 }
 
 // =======================
-// JSONP fallback (if CORS blocks fetch)
+// GVIZ schedule loader (Google Sheets -> sessions[])
 // =======================
-function fetchJsonp(url: string, timeoutMs = 15000): Promise<ApiResponse> {
-  return new Promise((resolve, reject) => {
-    const cb = `__nw_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-    const script = document.createElement("script");
+function safeDay(v: unknown): DayId {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s === "mon" || s === "tue" || s === "wed") return s;
+  // default if sheet has unexpected values
+  return "mon";
+}
 
-    const cleanup = () => {
-      try {
-        delete (window as any)[cb];
-      } catch {
-        // ignore
-      }
-      script.remove();
-    };
+function safeStr(v: unknown): string {
+  return String(v ?? "").trim();
+}
 
-    const timer = window.setTimeout(() => {
-      cleanup();
-      reject(new Error("JSONP request timed out"));
-    }, timeoutMs);
+function parsePresentersCell(v: unknown): string[] {
+  const raw = safeStr(v);
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
-    (window as any)[cb] = (data: ApiResponse) => {
-      window.clearTimeout(timer);
-      cleanup();
-      resolve(data);
-    };
+// NOTE: GVIZ wraps JSON in "google.visualization.Query.setResponse(...)"
+async function fetchGvizSessions(url: string): Promise<ApiResponse> {
+  const res = await fetch(url, { cache: "no-store" });
+  const text = await res.text();
 
-    script.src = `${url}${url.includes("?") ? "&" : "?"}callback=${cb}`;
-    script.onerror = () => {
-      window.clearTimeout(timer);
-      cleanup();
-      reject(new Error("JSONP script failed to load"));
-    };
+  const match = text.match(/setResponse\(([\s\S]*)\);?\s*$/);
+  if (!match) {
+    // Usually means permissions page (HTML) or a different response
+    throw new Error("Unexpected GVIZ response (no setResponse)");
+  }
 
-    document.body.appendChild(script);
-  });
+  const payload = JSON.parse(match[1]);
+  const table = payload?.table;
+
+  const cols: string[] = (table?.cols || []).map((c: any) =>
+    String(c?.label || "").trim().toLowerCase()
+  );
+
+  const rows: any[] = table?.rows || [];
+
+  const sessions: Session[] = rows
+    .map((r: any) => {
+      const cells = (r.c || []).map((cell: any) =>
+        cell ? cell.v ?? "" : ""
+      );
+
+      const obj: Record<string, unknown> = {};
+      cols.forEach((h, i) => (obj[h] = cells[i]));
+
+      // Your sheet uses "presenterIds" (camelCase). GVIZ labels come from header row.
+      // When lowercased, "presenterIds" becomes "presenterids".
+      const presenterIdsRaw = safeStr(obj["presenterids"]);
+
+      const presentersArr = parsePresentersCell(obj["presenters"]);
+
+      const s: Session = {
+        id: safeStr(obj["id"]),
+        title: safeStr(obj["title"]),
+        track: safeStr(obj["track"]),
+        type: safeStr(obj["type"]),
+        day: safeDay(obj["day"]),
+        start: safeStr(obj["start"]),
+        end: safeStr(obj["end"]),
+        room: safeStr(obj["room"]),
+        level: safeStr(obj["level"]),
+        description: safeStr(obj["description"]) || undefined,
+        presenters: presentersArr,
+        presenterIds: presenterIdsRaw || undefined,
+      };
+
+      return s;
+    })
+    .filter((s) => s.id && s.title);
+
+  return { sessions, lastUpdated: new Date().toISOString() };
 }
 
 // =======================
@@ -283,86 +334,84 @@ const ROOM_NORMALIZE: Array<[RegExp, string]> = [
   [/^hotel lobby$/i, "Hotel Lobby"],
 ];
 
-const ROOM_META: Record<
-  string,
-  { floor: string; mapHref: string; badge?: string }
-> = {
-  "Cascade Ballroom": {
-    floor: "Mezzanine Level (2nd Floor)",
-    mapHref: "/venue",
-    badge: "Main Events",
-  },
-  "Cascade Foyer": {
-    floor: "Mezzanine Level (2nd Floor)",
-    mapHref: "/venue",
-    badge: "Registration / Pre-function",
-  },
-  Adams: {
-    floor: "Mezzanine Level (2nd Floor)",
-    mapHref: "/venue",
-    badge: "Sessions",
-  },
-  Olympic: {
-    floor: "Mezzanine Level (2nd Floor)",
-    mapHref: "/venue",
-    badge: "Sessions",
-  },
-  Stuart: {
-    floor: "Mezzanine Level (2nd Floor)",
-    mapHref: "/venue",
-    badge: "Meetings / Work Space",
-  },
-  Baker: {
-    floor: "Mezzanine Level (2nd Floor)",
-    mapHref: "/venue",
-    badge: "Lactation",
-  },
-  "St. Helens": {
-    floor: "Mezzanine Level (2nd Floor)",
-    mapHref: "/venue",
-    badge: "Sensory Space",
-  },
-  Registration: {
-    floor: "Mezzanine Level (2nd Floor)",
-    mapHref: "/venue",
-    badge: "Info Desk",
-  },
-  "Hotel Lobby": {
-    floor: "Lobby Level (1st Floor)",
-    mapHref: "/venue",
-    badge: "Meet-up Point",
-  },
-  Whidbey: {
-    floor: "San Juan Level (3rd Floor)",
-    mapHref: "/venue",
-    badge: "Sessions",
-  },
-  Orcas: {
-    floor: "San Juan Level (3rd Floor)",
-    mapHref: "/venue",
-    badge: "Sessions",
-  },
-  Blakely: {
-    floor: "San Juan Level (3rd Floor)",
-    mapHref: "/venue",
-    badge: "Sessions",
-  },
-  "Puget Sound": {
-    floor: "Lobby Level (1st Floor)",
-    mapHref: "/venue",
-    badge: "Social / Events",
-  },
-  "Mahlum Seattle Home Office": {
-    floor: "Off-site",
-    mapHref: "/venue",
-    badge: "Off-site",
-  },
-  "UW Campus – Lander Hall": {
-    floor: "Off-site",
-    mapHref: "/venue",
-    badge: "Off-site",
-  },
-};
+const ROOM_META: Record<string, { floor: string; mapHref: string; badge?: string }> =
+  {
+    "Cascade Ballroom": {
+      floor: "Mezzanine Level (2nd Floor)",
+      mapHref: "/venue",
+      badge: "Main Events",
+    },
+    "Cascade Foyer": {
+      floor: "Mezzanine Level (2nd Floor)",
+      mapHref: "/venue",
+      badge: "Registration / Pre-function",
+    },
+    Adams: {
+      floor: "Mezzanine Level (2nd Floor)",
+      mapHref: "/venue",
+      badge: "Sessions",
+    },
+    Olympic: {
+      floor: "Mezzanine Level (2nd Floor)",
+      mapHref: "/venue",
+      badge: "Sessions",
+    },
+    Stuart: {
+      floor: "Mezzanine Level (2nd Floor)",
+      mapHref: "/venue",
+      badge: "Meetings / Work Space",
+    },
+    Baker: {
+      floor: "Mezzanine Level (2nd Floor)",
+      mapHref: "/venue",
+      badge: "Lactation",
+    },
+    "St. Helens": {
+      floor: "Mezzanine Level (2nd Floor)",
+      mapHref: "/venue",
+      badge: "Sensory Space",
+    },
+    Registration: {
+      floor: "Mezzanine Level (2nd Floor)",
+      mapHref: "/venue",
+      badge: "Info Desk",
+    },
+    "Hotel Lobby": {
+      floor: "Lobby Level (1st Floor)",
+      mapHref: "/venue",
+      badge: "Meet-up Point",
+    },
+    Whidbey: {
+      floor: "San Juan Level (3rd Floor)",
+      mapHref: "/venue",
+      badge: "Sessions",
+    },
+    Orcas: {
+      floor: "San Juan Level (3rd Floor)",
+      mapHref: "/venue",
+      badge: "Sessions",
+    },
+    Blakely: {
+      floor: "San Juan Level (3rd Floor)",
+      mapHref: "/venue",
+      badge: "Sessions",
+    },
+    "Puget Sound": {
+      floor: "Lobby Level (1st Floor)",
+      mapHref: "/venue",
+      badge: "Social / Events",
+    },
+    "Mahlum Seattle Home Office": {
+      floor: "Off-site",
+      mapHref: "/venue",
+      badge: "Off-site",
+    },
+    "UW Campus – Lander Hall": {
+      floor: "Off-site",
+      mapHref: "/venue",
+      badge: "Off-site",
+    },
+  };
 
 function normalizeRoom(room: string): string {
   const r = (room || "").trim();
@@ -430,9 +479,7 @@ function asNameArray(presenters: string[] | string | undefined): string[] {
 
 function asIdArray(presenterIds: string[] | string | undefined): string[] {
   if (!presenterIds) return [];
-  return Array.isArray(presenterIds)
-    ? presenterIds
-    : splitSemicolonIds(presenterIds);
+  return Array.isArray(presenterIds) ? presenterIds : splitSemicolonIds(presenterIds);
 }
 
 function PresentersLine({
@@ -477,12 +524,11 @@ function PresentersLine({
 }
 
 // =======================
-// Default fallback sessions (keep your existing list)
+// Default fallback sessions
 // =======================
-const mockSessions: Session[] = [
-  // Keep YOUR existing mockSessions here exactly.
-  // Leaving this empty will break fallback behavior.
-] as unknown as Session[];
+// If you want a visible fallback when GVIZ fails, paste your old mockSessions here.
+// Leaving it empty will show "Could not load schedule..." AND an empty list.
+const mockSessions: Session[] = [];
 
 // =======================
 // Components
@@ -598,10 +644,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onClear,
 }) => {
   const hasActiveFilters =
-    !!search.trim() ||
-    track !== "All Tracks" ||
-    type !== "All Types" ||
-    onlyFavorites;
+    !!search.trim() || track !== "All Tracks" || type !== "All Types" || onlyFavorites;
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
@@ -691,8 +734,8 @@ const FilterBar: React.FC<FilterBarProps> = ({
 // Main App
 // =======================
 export default function ConferenceScheduleApp() {
-  const [mounted, setMounted] = useState(false); // hydration-safe time rendering
-  const [selectedDay, setSelectedDay] = useState<"mon" | "tue" | "wed">("mon");
+  const [mounted, setMounted] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<DayId>("mon");
 
   const [search, setSearch] = useState("");
   const [track, setTrack] = useState("All Tracks");
@@ -708,38 +751,38 @@ export default function ConferenceScheduleApp() {
 
   useEffect(() => setMounted(true), []);
 
-const handleToggleFavorite = (session: Session) => {
-  const id = session.id;
+  const handleToggleFavorite = (session: Session) => {
+    const id = session.id;
 
-  setFavorites((prev) => {
-    const next = new Set(prev);
+    setFavorites((prev) => {
+      const next = new Set(prev);
 
-    const willAdd = !next.has(id);
-    if (willAdd) next.add(id);
-    else next.delete(id);
+      const willAdd = !next.has(id);
+      if (willAdd) next.add(id);
+      else next.delete(id);
 
-    const evt: AttendanceEvent = {
-      ts: Date.now(),
-      anonId: getAnonId(),
-      sessionId: id,
-      action: willAdd ? "add" : "remove",
-      sessionTitle: session.title,
-      day: session.day,
-      start: session.start,
-      end: session.end,
-      room: normalizeRoom(session.room),
-      userAgent: navigator.userAgent,
-    };
+      const evt: AttendanceEvent = {
+        ts: Date.now(),
+        anonId: getAnonId(),
+        sessionId: id,
+        action: willAdd ? "add" : "remove",
+        sessionTitle: session.title,
+        day: session.day,
+        start: session.start,
+        end: session.end,
+        room: normalizeRoom(session.room),
+        userAgent: navigator.userAgent,
+      };
 
-    if (!navigator.onLine) {
-      queueAttendanceEvent(evt);
-    } else {
-      postAttendanceEvent(APPS_SCRIPT_URL, evt).catch(() => queueAttendanceEvent(evt));
-    }
+      if (!navigator.onLine) {
+        queueAttendanceEvent(evt);
+      } else {
+        postAttendanceEvent(APPS_SCRIPT_URL, evt).catch(() => queueAttendanceEvent(evt));
+      }
 
-    return next;
-  });
-};
+      return next;
+    });
+  };
 
   const clearFilters = () => {
     setSearch("");
@@ -762,34 +805,29 @@ const handleToggleFavorite = (session: Session) => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-// =======================
-// Load schedule from Apps Script (JSONP to avoid CORS)
-// =======================
-useEffect(() => {
-  const SCHEDULE_URL =
-  "https://docs.google.com/spreadsheets/d/1z2FDi4LpFtCzLdjHiOY_DRL76X8ehiQwcEUwkjU79_I/gviz/tq?tqx=out:json&sheet=Sessions";
+  // Load schedule from Google Sheets (GVIZ)
+  useEffect(() => {
+    const scheduleUrl = SCHEDULE_URL?.trim();
+    if (!scheduleUrl) return;
 
-  if (!SCHEDULE_URL) return;
+    setLoading(true);
+    setLoadError(null);
 
-  setLoading(true);
-  setLoadError(null);
-
-  fetchJsonp(SCHEDULE_URL)
-    .then((data) => {
-      if (Array.isArray(data.sessions)) {
+    fetchGvizSessions(scheduleUrl)
+      .then((data) => {
+        if (!Array.isArray(data.sessions)) throw new Error("Missing sessions[]");
         setSessions(data.sessions);
         setLastUpdated(data.lastUpdated ?? null);
-      } else {
-        throw new Error("Unexpected API response (missing sessions[])");
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-      setLoadError("Could not load schedule. Showing the built-in schedule.");
-      setSessions(mockSessions);
-    })
-    .finally(() => setLoading(false));
-}, []);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoadError(
+          "Could not load schedule. (Check Google Sheet sharing or File → Publish to the web.)"
+        );
+        setSessions(mockSessions);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   // Optional: prune favorites that don't exist in the current sessions list
   useEffect(() => {
@@ -800,13 +838,14 @@ useEffect(() => {
     });
   }, [sessions]);
 
+  // Flush attendance queue on load + when back online
   useEffect(() => {
-  flushAttendanceQueue(APPS_SCRIPT_URL);
+    flushAttendanceQueue(APPS_SCRIPT_URL);
 
-  const onOnline = () => flushAttendanceQueue(APPS_SCRIPT_URL);
-  window.addEventListener("online", onOnline);
-  return () => window.removeEventListener("online", onOnline);
-}, []);
+    const onOnline = () => flushAttendanceQueue(APPS_SCRIPT_URL);
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
 
   const filteredSessions = useMemo(() => {
     let list = sessions.filter((s) => s.day === selectedDay);
@@ -877,7 +916,8 @@ useEffect(() => {
                   </span>
                 ) : lastUpdated ? (
                   <span>
-                    Last updated: {mounted ? new Date(lastUpdated).toLocaleString() : "—"}
+                    Last updated:{" "}
+                    {mounted ? new Date(lastUpdated).toLocaleString() : "—"}
                   </span>
                 ) : null}
               </div>
@@ -930,7 +970,7 @@ useEffect(() => {
               <CardContent className="pt-0">
                 <Tabs
                   value={selectedDay}
-                  onValueChange={(value) => setSelectedDay(value as "mon" | "tue" | "wed")}
+                  onValueChange={(value) => setSelectedDay(value as DayId)}
                   className="w-full"
                 >
                   <TabsList className="grid grid-cols-3 rounded-xl bg-slate-100 p-1 text-xs">
@@ -967,13 +1007,13 @@ useEffect(() => {
               </CardHeader>
               <CardContent className="space-y-2">
                 <p>
-                  ★ Star a session to add it to <span className="font-semibold">My Schedule</span>.
+                  ★ Star a session to add it to{" "}
+                  <span className="font-semibold">My Schedule</span>.
                 </p>
+                <p>Search can match room names (try “Cascade”, “Adams”, “Whidbey”).</p>
                 <p>
-                  Search can match room names (try “Cascade”, “Adams”, “Whidbey”).
-                </p>
-                <p>
-                  Use <span className="font-semibold">View Venue Map</span> to find session rooms fast.
+                  Use <span className="font-semibold">View Venue Map</span> to find
+                  session rooms fast.
                 </p>
               </CardContent>
             </Card>
@@ -987,7 +1027,8 @@ useEffect(() => {
                   {days.find((d) => d.id === selectedDay)?.label} Schedule
                 </h2>
                 <p className="text-[11px] text-slate-500">
-                  {filteredSessions.length} session{filteredSessions.length === 1 ? "" : "s"} found
+                  {filteredSessions.length} session
+                  {filteredSessions.length === 1 ? "" : "s"} found
                   {onlyFavorites && ", favorites only"}.
                 </p>
               </div>
