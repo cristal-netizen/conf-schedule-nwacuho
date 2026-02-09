@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -34,13 +34,9 @@ import { Label } from "@/components/ui/label";
 // Config (EDIT THESE)
 // =======================
 
-// Attendance tracking (write events + counts) via Apps Script Web App
+// Apps Script Web App (reads sessions + counts, writes attendance)
 const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycby0pPaSuE0XhIwAqencFZTTEYtFT57wB648KDppSymJA4CSb1HHeQHnBPX1ZMbteZUy/exec";
-
-// Schedule loading (read Sessions) via Google Sheets GVIZ endpoint (NO JSONP)
-const SCHEDULE_URL =
-  "https://docs.google.com/spreadsheets/d/1z2FDi4LpFtCzLdjHiOY_DRL76X8ehiQwcEUwkjU79_I/gviz/tq?tqx=out:json&sheet=Sessions";
 
 const FAVORITES_KEY = "nwacuho:favorites:v1";
 
@@ -65,10 +61,14 @@ type Session = {
   presenterIds?: string[] | string;
 };
 
-type ApiResponse = {
+type SessionsResponse = {
   lastUpdated?: string;
   sessions?: Session[];
-  rowErrors?: Array<{ row: number; id?: string; errors: string[] }>;
+};
+
+type CountsResponse = {
+  lastUpdated?: string;
+  counts?: Record<string, number>;
 };
 
 // =======================
@@ -94,7 +94,7 @@ function saveFavorites(favs: Set<string>) {
 }
 
 // =======================
-// Attendance logging (to Google Sheet via Apps Script)
+// Attendance logging (to Apps Script)
 // =======================
 const ANON_KEY = "nwacuho:anonId:v1";
 const QUEUE_KEY = "nwacuho:attendanceQueue:v1";
@@ -174,10 +174,8 @@ async function postAttendanceEvent(url: string, evt: AttendanceEvent) {
     userAgent: evt.userAgent || "",
   };
 
-  // Best effort: avoids CORS issues and works during unload
   if (trySendBeacon(url, payload)) return;
 
-  // Fallback: opaque response is fine; we only need it to reach Apps Script
   await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -207,114 +205,44 @@ async function flushAttendanceQueue(url: string) {
 }
 
 // =======================
-// GVIZ schedule loader (Google Sheets -> sessions[])
+// JSONP helper (for sessions + counts)
 // =======================
-function safeDay(v: unknown): DayId {
-  const s = String(v ?? "").trim().toLowerCase();
-  if (s === "mon" || s === "tue" || s === "wed") return s;
-  // default if sheet has unexpected values
-  return "mon";
-}
+function fetchJsonp<T = any>(url: string, timeoutMs = 15000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const cb = `__nw_cb_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const script = document.createElement("script");
 
-function safeStr(v: unknown): string {
-  return String(v ?? "").trim();
-}
+    const cleanup = () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (window as any)[cb];
+      } catch {
+        // ignore
+      }
+      script.remove();
+    };
 
-function parsePresentersCell(v: unknown): string[] {
-  const raw = safeStr(v);
-  if (!raw) return [];
-  return raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+    const timer = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("JSONP request timed out"));
+    }, timeoutMs);
 
-function gvizTimeToHHMM(v: unknown): string {
-  // GVIZ may return:
-  // - "10:00" (string)
-  // - Date(...) string
-  // - actual Date object (rare)
-  if (v instanceof Date) {
-    const hh = String(v.getHours()).padStart(2, "0");
-    const mm = String(v.getMinutes()).padStart(2, "0");
-    return `${hh}:${mm}`;
-  }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any)[cb] = (data: T) => {
+      window.clearTimeout(timer);
+      cleanup();
+      resolve(data);
+    };
 
-  const s = String(v ?? "").trim();
+    script.src = `${url}${url.includes("?") ? "&" : "?"}callback=${cb}`;
+    script.onerror = () => {
+      window.clearTimeout(timer);
+      cleanup();
+      reject(new Error("JSONP script failed to load"));
+    };
 
-  // Already HH:MM
-  const hhmm = /^(\d{1,2}):(\d{2})$/.exec(s);
-  if (hhmm) return `${String(Number(hhmm[1])).padStart(2, "0")}:${hhmm[2]}`;
-
-  // GVIZ: Date(1899,11,30,10,0,0)
-  const m = /^Date\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*(\d{1,2})\s*,\s*(\d{1,2})/i.exec(
-    s
-  );
-  if (m) {
-    const hh = String(Number(m[1])).padStart(2, "0");
-    const mm = String(Number(m[2])).padStart(2, "0");
-    return `${hh}:${mm}`;
-  }
-
-  // If it's something else, return as-is so you can spot bad data
-  return s;
-}
-
-// NOTE: GVIZ wraps JSON in "google.visualization.Query.setResponse(...)"
-async function fetchGvizSessions(url: string): Promise<ApiResponse> {
-  const res = await fetch(url, { cache: "no-store" });
-  const text = await res.text();
-
-  const match = text.match(/setResponse\(([\s\S]*)\);?\s*$/);
-  if (!match) {
-    // Usually means permissions page (HTML) or a different response
-    throw new Error("Unexpected GVIZ response (no setResponse)");
-  }
-
-  const payload = JSON.parse(match[1]);
-  const table = payload?.table;
-
-  const cols: string[] = (table?.cols || []).map((c: any) =>
-    String(c?.label || "").trim().toLowerCase()
-  );
-
-  const rows: any[] = table?.rows || [];
-
-  const sessions: Session[] = rows
-    .map((r: any) => {
-      const cells = (r.c || []).map((cell: any) =>
-        cell ? cell.v ?? "" : ""
-      );
-
-      const obj: Record<string, unknown> = {};
-      cols.forEach((h, i) => (obj[h] = cells[i]));
-
-      // Your sheet uses "presenterIds" (camelCase). GVIZ labels come from header row.
-      // When lowercased, "presenterIds" becomes "presenterids".
-      const presenterIdsRaw = safeStr(obj["presenterids"]);
-
-      const presentersArr = parsePresentersCell(obj["presenters"]);
-
-      const s: Session = {
-        id: safeStr(obj["id"]),
-        title: safeStr(obj["title"]),
-        track: safeStr(obj["track"]),
-        type: safeStr(obj["type"]),
-        day: safeDay(obj["day"]),
-        start: gvizTimeToHHMM(obj["start"]),
-        end: gvizTimeToHHMM(obj["end"]),
-        room: safeStr(obj["room"]),
-        level: safeStr(obj["level"]),
-        description: safeStr(obj["description"]) || undefined,
-        presenters: presentersArr,
-        presenterIds: presenterIdsRaw || undefined,
-      };
-
-      return s;
-    })
-    .filter((s) => s.id && s.title);
-
-  return { sessions, lastUpdated: new Date().toISOString() };
+    document.body.appendChild(script);
+  });
 }
 
 // =======================
@@ -355,7 +283,6 @@ const sessionTypes = [
   "Meal",
 ];
 
-// --------- Room normalization (UX: consistent labels + map link) ---------
 const ROOM_NORMALIZE: Array<[RegExp, string]> = [
   [/^cascade ballroom(\s*(1|2|i|ii|iii|i-a|i-b|i-c))?$/i, "Cascade Ballroom"],
   [/^cascade foyer.*$/i, "Cascade Foyer"],
@@ -478,9 +405,7 @@ function sortSessions(list: Session[]): Session[] {
   return [...list].sort((a, b) => a.start.localeCompare(b.start));
 }
 
-// =======================
-// Presenter linking helpers
-// =======================
+// Presenter helpers
 function normPresenter(s: string) {
   return (s || "")
     .toLowerCase()
@@ -554,11 +479,7 @@ function PresentersLine({
   );
 }
 
-// =======================
-// Default fallback sessions
-// =======================
-// If you want a visible fallback when GVIZ fails, paste your old mockSessions here.
-// Leaving it empty will show "Could not load schedule..." AND an empty list.
+// Fallback sessions (optional)
 const mockSessions: Session[] = [];
 
 // =======================
@@ -568,12 +489,14 @@ type SessionCardProps = {
   session: Session;
   isFavorite: boolean;
   onToggleFavorite: (session: Session) => void;
+  plannedCount?: number;
 };
 
 const SessionCard: React.FC<SessionCardProps> = ({
   session,
   isFavorite,
   onToggleFavorite,
+  plannedCount = 0,
 }) => {
   const roomLabel = normalizeRoom(session.room);
   const meta = getRoomMeta(session.room);
@@ -639,6 +562,9 @@ const SessionCard: React.FC<SessionCardProps> = ({
           </Badge>
           <Badge variant="secondary">{session.type}</Badge>
           {session.level && <Badge variant="outline">{session.level}</Badge>}
+          <Badge variant="outline" className="border-slate-300 bg-slate-50">
+            Planned: {plannedCount}
+          </Badge>
         </div>
 
         {session.description && (
@@ -778,19 +704,112 @@ export default function ConferenceScheduleApp() {
   const [sessions, setSessions] = useState<Session[]>(mockSessions);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  const [scheduleUpdated, setScheduleUpdated] = useState<string | null>(null);
+
+  const [plannedCounts, setPlannedCounts] = useState<Record<string, number>>({});
+  const [countsUpdated, setCountsUpdated] = useState<string | null>(null);
+
+  const refreshTimerRef = useRef<number | null>(null);
 
   useEffect(() => setMounted(true), []);
+
+  // Persist favorites locally
+  useEffect(() => {
+    saveFavorites(favorites);
+  }, [favorites]);
+
+  // Sync favorites across tabs/windows
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === FAVORITES_KEY) setFavorites(loadFavorites());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // Flush attendance queue on load + when back online
+  useEffect(() => {
+    flushAttendanceQueue(APPS_SCRIPT_URL);
+    const onOnline = () => flushAttendanceQueue(APPS_SCRIPT_URL);
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
+
+  // -------- Schedule load (Apps Script JSONP) --------
+  const refreshSchedule = React.useCallback(() => {
+    const url = `${APPS_SCRIPT_URL}?mode=sessions`;
+    setLoading(true);
+    setLoadError(null);
+
+    return fetchJsonp<SessionsResponse>(url)
+      .then((data) => {
+        if (!Array.isArray(data?.sessions)) {
+          throw new Error("Missing sessions[] from Apps Script");
+        }
+        setSessions(data.sessions);
+        setScheduleUpdated(data?.lastUpdated ?? new Date().toISOString());
+      })
+      .catch((err) => {
+        console.error("Schedule load failed:", err);
+        setLoadError("Could not load schedule.");
+        setSessions(mockSessions);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    refreshSchedule();
+  }, [refreshSchedule]);
+
+  // -------- Counts load (Apps Script JSONP) --------
+  const refreshCounts = React.useCallback(() => {
+    const url = `${APPS_SCRIPT_URL}?mode=counts`;
+    return fetchJsonp<CountsResponse>(url)
+      .then((data) => {
+        if (data?.counts) setPlannedCounts(data.counts);
+        setCountsUpdated(data?.lastUpdated ?? new Date().toISOString());
+      })
+      .catch((err) => console.warn("Counts load failed:", err));
+  }, []);
+
+  useEffect(() => {
+    refreshCounts();
+  }, [refreshCounts]);
+
+  const scheduleCountsRefreshSoon = React.useCallback(() => {
+    if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
+    refreshTimerRef.current = window.setTimeout(() => {
+      refreshCounts();
+      refreshTimerRef.current = null;
+    }, 900);
+  }, [refreshCounts]);
+
+  // Optional: prune favorites that don't exist in the current sessions list
+  useEffect(() => {
+    const valid = new Set(sessions.map((s) => s.id));
+    setFavorites((prev) => {
+      const next = new Set([...prev].filter((id) => valid.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [sessions]);
 
   const handleToggleFavorite = (session: Session) => {
     const id = session.id;
 
     setFavorites((prev) => {
       const next = new Set(prev);
-
       const willAdd = !next.has(id);
+
       if (willAdd) next.add(id);
       else next.delete(id);
+
+      // Optimistic live count update
+      setPlannedCounts((pc) => {
+        const curr = pc[id] ?? 0;
+        const nextVal = Math.max(0, curr + (willAdd ? 1 : -1));
+        return { ...pc, [id]: nextVal };
+      });
 
       const evt: AttendanceEvent = {
         ts: Date.now(),
@@ -811,6 +830,7 @@ export default function ConferenceScheduleApp() {
         postAttendanceEvent(APPS_SCRIPT_URL, evt).catch(() => queueAttendanceEvent(evt));
       }
 
+      scheduleCountsRefreshSoon();
       return next;
     });
   };
@@ -821,62 +841,6 @@ export default function ConferenceScheduleApp() {
     setType("All Types");
     setOnlyFavorites(false);
   };
-
-  // Persist favorites locally
-  useEffect(() => {
-    saveFavorites(favorites);
-  }, [favorites]);
-
-  // Sync favorites across tabs/windows
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === FAVORITES_KEY) setFavorites(loadFavorites());
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
-  // Load schedule from Google Sheets (GVIZ)
-  useEffect(() => {
-    const scheduleUrl = SCHEDULE_URL?.trim();
-    if (!scheduleUrl) return;
-
-    setLoading(true);
-    setLoadError(null);
-
-    fetchGvizSessions(scheduleUrl)
-      .then((data) => {
-        if (!Array.isArray(data.sessions)) throw new Error("Missing sessions[]");
-        setSessions(data.sessions);
-        setLastUpdated(data.lastUpdated ?? null);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoadError(
-          "Could not load schedule. (Check Google Sheet sharing or File → Publish to the web.)"
-        );
-        setSessions(mockSessions);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  // Optional: prune favorites that don't exist in the current sessions list
-  useEffect(() => {
-    const valid = new Set(sessions.map((s) => s.id));
-    setFavorites((prev) => {
-      const next = new Set([...prev].filter((id) => valid.has(id)));
-      return next.size === prev.size ? prev : next;
-    });
-  }, [sessions]);
-
-  // Flush attendance queue on load + when back online
-  useEffect(() => {
-    flushAttendanceQueue(APPS_SCRIPT_URL);
-
-    const onOnline = () => flushAttendanceQueue(APPS_SCRIPT_URL);
-    window.addEventListener("online", onOnline);
-    return () => window.removeEventListener("online", onOnline);
-  }, []);
 
   const filteredSessions = useMemo(() => {
     let list = sessions.filter((s) => s.day === selectedDay);
@@ -898,7 +862,6 @@ export default function ConferenceScheduleApp() {
     }
 
     if (onlyFavorites) list = list.filter((s) => favorites.has(s.id));
-
     return sortSessions(list);
   }, [selectedDay, search, track, type, favorites, onlyFavorites, sessions]);
 
@@ -945,10 +908,17 @@ export default function ConferenceScheduleApp() {
                     <Info className="h-3 w-3" />
                     {loadError}
                   </span>
-                ) : lastUpdated ? (
+                ) : scheduleUpdated ? (
                   <span>
-                    Last updated:{" "}
-                    {mounted ? new Date(lastUpdated).toLocaleString() : "—"}
+                    Schedule updated:{" "}
+                    {mounted ? new Date(scheduleUpdated).toLocaleString() : "—"}
+                  </span>
+                ) : null}
+
+                {countsUpdated ? (
+                  <span className="ml-2 opacity-90">
+                    • Counts updated:{" "}
+                    {mounted ? new Date(countsUpdated).toLocaleTimeString() : "—"}
                   </span>
                 ) : null}
               </div>
@@ -982,6 +952,25 @@ export default function ConferenceScheduleApp() {
                     {favoriteCount}
                   </span>
                 </button>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-3 text-[11px] bg-white/10 text-white border-white/30 hover:bg-white/20"
+                  onClick={() => refreshSchedule()}
+                >
+                  Refresh schedule
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-3 text-[11px] bg-white/10 text-white border-white/30 hover:bg-white/20"
+                  onClick={() => refreshCounts()}
+                >
+                  Refresh counts
+                </Button>
               </div>
             </div>
           </div>
@@ -1031,23 +1020,6 @@ export default function ConferenceScheduleApp() {
               onToggleFavorites={setOnlyFavorites}
               onClear={clearFilters}
             />
-
-            <Card className="border-slate-200/80 shadow-sm text-xs">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Quick Tips</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p>
-                  ★ Star a session to add it to{" "}
-                  <span className="font-semibold">My Schedule</span>.
-                </p>
-                <p>Search can match room names (try “Cascade”, “Adams”, “Whidbey”).</p>
-                <p>
-                  Use <span className="font-semibold">View Venue Map</span> to find
-                  session rooms fast.
-                </p>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Right Column */}
@@ -1101,6 +1073,7 @@ export default function ConferenceScheduleApp() {
                       session={session}
                       isFavorite={favorites.has(session.id)}
                       onToggleFavorite={handleToggleFavorite}
+                      plannedCount={plannedCounts[session.id] ?? 0}
                     />
                   ))}
                 </div>
