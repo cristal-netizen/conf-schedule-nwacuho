@@ -234,14 +234,19 @@ function fetchJsonp<T = any>(url: string, timeoutMs = 15000): Promise<T> {
       resolve(data);
     };
 
-    script.src = `${url}${url.includes("?") ? "&" : "?"}callback=${cb}`;
+    // cache-bust param avoids SW/proxy stale failures
+    const bust = `_=${Date.now()}`;
+    script.src = `${url}${url.includes("?") ? "&" : "?"}callback=${cb}&${bust}`;
+    script.async = true;
+
     script.onerror = () => {
       window.clearTimeout(timer);
       cleanup();
       reject(new Error("JSONP script failed to load"));
     };
 
-    document.body.appendChild(script);
+    // Use HEAD (more reliable in PWA/iOS)
+    document.head.appendChild(script);
   });
 }
 
