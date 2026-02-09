@@ -52,8 +52,15 @@ export default function RootLayout({
               NWACUHO 2026 · Seattle
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/" className="text-slate-700 hover:text-[#28903b]">
+              <Link href="/" className="text-slate-700 hover:text-[#28903b]"
+              >
                 Schedule
+              </Link>
+              <Link
+                href="/info"
+                className="text-slate-700 hover:text-[#28903b]"
+              >
+                 Info
               </Link>
               <Link
                 href="/speakers"
