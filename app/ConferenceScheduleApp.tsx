@@ -229,6 +229,37 @@ function parsePresentersCell(v: unknown): string[] {
     .filter(Boolean);
 }
 
+function gvizTimeToHHMM(v: unknown): string {
+  // GVIZ may return:
+  // - "10:00" (string)
+  // - Date(...) string
+  // - actual Date object (rare)
+  if (v instanceof Date) {
+    const hh = String(v.getHours()).padStart(2, "0");
+    const mm = String(v.getMinutes()).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+
+  const s = String(v ?? "").trim();
+
+  // Already HH:MM
+  const hhmm = /^(\d{1,2}):(\d{2})$/.exec(s);
+  if (hhmm) return `${String(Number(hhmm[1])).padStart(2, "0")}:${hhmm[2]}`;
+
+  // GVIZ: Date(1899,11,30,10,0,0)
+  const m = /^Date\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*(\d{1,2})\s*,\s*(\d{1,2})/i.exec(
+    s
+  );
+  if (m) {
+    const hh = String(Number(m[1])).padStart(2, "0");
+    const mm = String(Number(m[2])).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+
+  // If it's something else, return as-is so you can spot bad data
+  return s;
+}
+
 // NOTE: GVIZ wraps JSON in "google.visualization.Query.setResponse(...)"
 async function fetchGvizSessions(url: string): Promise<ApiResponse> {
   const res = await fetch(url, { cache: "no-store" });
@@ -270,8 +301,8 @@ async function fetchGvizSessions(url: string): Promise<ApiResponse> {
         track: safeStr(obj["track"]),
         type: safeStr(obj["type"]),
         day: safeDay(obj["day"]),
-        start: safeStr(obj["start"]),
-        end: safeStr(obj["end"]),
+        start: gvizTimeToHHMM(obj["start"]),
+        end: gvizTimeToHHMM(obj["end"]),
         room: safeStr(obj["room"]),
         level: safeStr(obj["level"]),
         description: safeStr(obj["description"]) || undefined,
