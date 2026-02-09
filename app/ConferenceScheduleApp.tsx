@@ -867,7 +867,7 @@ export default function ConferenceScheduleApp() {
 
   const favoriteCount = favorites.size;
 
-  return (
+    return (
     <div className="min-h-screen bg-neutral-900/5 py-6 px-3 md:px-6 font-[Calibri,_system-ui,_sans-serif]">
       <div className="mx-auto flex max-w-5xl flex-col gap-5">
         {/* Header */}
@@ -924,18 +924,22 @@ export default function ConferenceScheduleApp() {
               </div>
             </div>
 
+            {/* Right side of header */}
             <div className="flex flex-col items-start md:items-end gap-2">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-slate-900/40 px-3 py-1 text-[11px]">
                 <Star className="h-3 w-3" />
                 <span>
-                  My Schedule: {favoriteCount} session{favoriteCount === 1 ? "" : "s"}
+                  My Schedule: {favoriteCount} session
+                  {favoriteCount === 1 ? "" : "s"}
                 </span>
               </div>
 
               <div className="inline-flex items-center rounded-full bg-white/10 p-1 text-[11px]">
                 <button
                   className={`px-2 py-1 rounded-full ${
-                    !onlyFavorites ? "bg-white text-slate-900 shadow-sm" : "text-white/90"
+                    !onlyFavorites
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-white/90"
                   }`}
                   onClick={() => setOnlyFavorites(false)}
                 >
@@ -943,7 +947,9 @@ export default function ConferenceScheduleApp() {
                 </button>
                 <button
                   className={`px-2 py-1 rounded-full flex items-center gap-1 ${
-                    onlyFavorites ? "bg-white text-slate-900 shadow-sm" : "text-white/90"
+                    onlyFavorites
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-white/90"
                   }`}
                   onClick={() => setOnlyFavorites(true)}
                 >
@@ -952,25 +958,6 @@ export default function ConferenceScheduleApp() {
                     {favoriteCount}
                   </span>
                 </button>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3 text-[11px] bg-white/10 text-white border-white/30 hover:bg-white/20"
-                  onClick={() => refreshSchedule()}
-                >
-                  Refresh schedule
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3 text-[11px] bg-white/10 text-white border-white/30 hover:bg-white/20"
-                  onClick={() => refreshCounts()}
-                >
-                  Refresh counts
-                </Button>
               </div>
             </div>
           </div>
@@ -1048,9 +1035,12 @@ export default function ConferenceScheduleApp() {
             <ScrollArea className="h-[60vh] min-h-[420px] pr-2">
               {filteredSessions.length === 0 ? (
                 <div className="flex h-48 flex-col items-center justify-center text-center text-sm text-slate-500">
-                  <p className="font-medium text-slate-700">No sessions match your filters.</p>
+                  <p className="font-medium text-slate-700">
+                    No sessions match your filters.
+                  </p>
                   <p className="text-xs mt-1 max-w-sm">
-                    Try clearing filters, switching days, or searching by room (like “Cascade”).
+                    Try clearing filters, switching days, or searching by room (like
+                    “Cascade”).
                   </p>
                   <div className="mt-3 flex gap-2">
                     <Button variant="outline" size="sm" onClick={clearFilters}>
