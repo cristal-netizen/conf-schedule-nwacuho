@@ -76,10 +76,10 @@ type CountsResponse = {
 // =======================
 function loadFavorites(): Set<string> {
   try {
-    const raw =
-      typeof window !== "undefined" ? localStorage.getItem(FAVORITES_KEY) : null;
-    const arr = raw ? (JSON.parse(raw) as string[]) : [];
-    return new Set(Array.isArray(arr) ? arr : []);
+    if (typeof window === "undefined") return new Set();
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    const arr = raw ? (JSON.parse(raw) as unknown) : [];
+    return new Set(Array.isArray(arr) ? (arr as string[]) : []);
   } catch {
     return new Set();
   }
@@ -245,7 +245,6 @@ function fetchJsonp<T = any>(url: string, timeoutMs = 15000): Promise<T> {
       reject(new Error("JSONP script failed to load"));
     };
 
-    // Use HEAD (more reliable in PWA/iOS)
     document.head.appendChild(script);
   });
 }
@@ -297,84 +296,86 @@ const ROOM_NORMALIZE: Array<[RegExp, string]> = [
   [/^hotel lobby$/i, "Hotel Lobby"],
 ];
 
-const ROOM_META: Record<string, { floor: string; mapHref: string; badge?: string }> =
-  {
-    "Cascade Ballroom": {
-      floor: "Mezzanine Level (2nd Floor)",
-      mapHref: "/venue",
-      badge: "Main Events",
-    },
-    "Cascade Foyer": {
-      floor: "Mezzanine Level (2nd Floor)",
-      mapHref: "/venue",
-      badge: "Registration / Pre-function",
-    },
-    Adams: {
-      floor: "Mezzanine Level (2nd Floor)",
-      mapHref: "/venue",
-      badge: "Sessions",
-    },
-    Olympic: {
-      floor: "Mezzanine Level (2nd Floor)",
-      mapHref: "/venue",
-      badge: "Sessions",
-    },
-    Stuart: {
-      floor: "Mezzanine Level (2nd Floor)",
-      mapHref: "/venue",
-      badge: "Meetings / Work Space",
-    },
-    Baker: {
-      floor: "Mezzanine Level (2nd Floor)",
-      mapHref: "/venue",
-      badge: "Lactation",
-    },
-    "St. Helens": {
-      floor: "Mezzanine Level (2nd Floor)",
-      mapHref: "/venue",
-      badge: "Sensory Space",
-    },
-    Registration: {
-      floor: "Mezzanine Level (2nd Floor)",
-      mapHref: "/venue",
-      badge: "Info Desk",
-    },
-    "Hotel Lobby": {
-      floor: "Lobby Level (1st Floor)",
-      mapHref: "/venue",
-      badge: "Meet-up Point",
-    },
-    Whidbey: {
-      floor: "San Juan Level (3rd Floor)",
-      mapHref: "/venue",
-      badge: "Sessions",
-    },
-    Orcas: {
-      floor: "San Juan Level (3rd Floor)",
-      mapHref: "/venue",
-      badge: "Sessions",
-    },
-    Blakely: {
-      floor: "San Juan Level (3rd Floor)",
-      mapHref: "/venue",
-      badge: "Sessions",
-    },
-    "Puget Sound": {
-      floor: "Lobby Level (1st Floor)",
-      mapHref: "/venue",
-      badge: "Social / Events",
-    },
-    "Mahlum Seattle Home Office": {
-      floor: "Off-site",
-      mapHref: "/venue",
-      badge: "Off-site",
-    },
-    "UW Campus – Lander Hall": {
-      floor: "Off-site",
-      mapHref: "/venue",
-      badge: "Off-site",
-    },
-  };
+const ROOM_META: Record<
+  string,
+  { floor: string; mapHref: string; badge?: string }
+> = {
+  "Cascade Ballroom": {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Main Events",
+  },
+  "Cascade Foyer": {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Registration / Pre-function",
+  },
+  Adams: {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Sessions",
+  },
+  Olympic: {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Sessions",
+  },
+  Stuart: {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Meetings / Work Space",
+  },
+  Baker: {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Lactation",
+  },
+  "St. Helens": {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Sensory Space",
+  },
+  Registration: {
+    floor: "Mezzanine Level (2nd Floor)",
+    mapHref: "/venue",
+    badge: "Info Desk",
+  },
+  "Hotel Lobby": {
+    floor: "Lobby Level (1st Floor)",
+    mapHref: "/venue",
+    badge: "Meet-up Point",
+  },
+  Whidbey: {
+    floor: "San Juan Level (3rd Floor)",
+    mapHref: "/venue",
+    badge: "Sessions",
+  },
+  Orcas: {
+    floor: "San Juan Level (3rd Floor)",
+    mapHref: "/venue",
+    badge: "Sessions",
+  },
+  Blakely: {
+    floor: "San Juan Level (3rd Floor)",
+    mapHref: "/venue",
+    badge: "Sessions",
+  },
+  "Puget Sound": {
+    floor: "Lobby Level (1st Floor)",
+    mapHref: "/venue",
+    badge: "Social / Events",
+  },
+  "Mahlum Seattle Home Office": {
+    floor: "Off-site",
+    mapHref: "/venue",
+    badge: "Off-site",
+  },
+  "UW Campus – Lander Hall": {
+    floor: "Off-site",
+    mapHref: "/venue",
+    badge: "Off-site",
+  },
+};
 
 function normalizeRoom(room: string): string {
   const r = (room || "").trim();
@@ -385,7 +386,9 @@ function normalizeRoom(room: string): string {
   return r;
 }
 
-function getRoomMeta(room: string): { floor?: string; mapHref?: string; badge?: string } {
+function getRoomMeta(
+  room: string
+): { floor?: string; mapHref?: string; badge?: string } {
   const key = normalizeRoom(room);
   const meta = ROOM_META[key];
   if (!meta) return {};
@@ -440,7 +443,9 @@ function asNameArray(presenters: string[] | string | undefined): string[] {
 
 function asIdArray(presenterIds: string[] | string | undefined): string[] {
   if (!presenterIds) return [];
-  return Array.isArray(presenterIds) ? presenterIds : splitSemicolonIds(presenterIds);
+  return Array.isArray(presenterIds)
+    ? presenterIds
+    : splitSemicolonIds(presenterIds);
 }
 
 function PresentersLine({
@@ -554,7 +559,9 @@ const SessionCard: React.FC<SessionCardProps> = ({
           size="icon"
           className="h-8 w-8 rounded-full shrink-0"
           onClick={() => onToggleFavorite(session)}
-          aria-label={isFavorite ? "Remove from My Schedule" : "Add to My Schedule"}
+          aria-label={
+            isFavorite ? "Remove from My Schedule" : "Add to My Schedule"
+          }
         >
           <Star className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
         </Button>
@@ -576,7 +583,10 @@ const SessionCard: React.FC<SessionCardProps> = ({
           <p className="text-xs text-slate-700 mb-2">{session.description}</p>
         )}
 
-        <PresentersLine presenters={session.presenters} presenterIds={session.presenterIds} />
+        <PresentersLine
+          presenters={session.presenters}
+          presenterIds={session.presenterIds}
+        />
       </CardContent>
     </Card>
   );
@@ -703,6 +713,7 @@ export default function ConferenceScheduleApp() {
   const [track, setTrack] = useState("All Tracks");
   const [type, setType] = useState("All Types");
 
+  // ✅ Init favorites from localStorage synchronously
   const [favorites, setFavorites] = useState<Set<string>>(() => loadFavorites());
   const [onlyFavorites, setOnlyFavorites] = useState(false);
 
@@ -719,10 +730,17 @@ export default function ConferenceScheduleApp() {
 
   useEffect(() => setMounted(true), []);
 
-  // Persist favorites locally
+  // Optional: request persistent storage on mobile
   useEffect(() => {
+    // best-effort only
+    navigator.storage?.persist?.().catch?.(() => {});
+  }, []);
+
+  // ✅ Persist favorites locally (after mount, to avoid any hydration edge cases)
+  useEffect(() => {
+    if (!mounted) return;
     saveFavorites(favorites);
-  }, [favorites]);
+  }, [favorites, mounted]);
 
   // Sync favorites across tabs/windows
   useEffect(() => {
@@ -790,14 +808,18 @@ export default function ConferenceScheduleApp() {
     }, 900);
   }, [refreshCounts]);
 
-  // Optional: prune favorites that don't exist in the current sessions list
+  // ✅ PRUNE FIX:
+  // Only prune after we have a real sessions list (and not after a load error).
   useEffect(() => {
+    if (loadError) return;
+    if (!sessions || sessions.length === 0) return;
+
     const valid = new Set(sessions.map((s) => s.id));
     setFavorites((prev) => {
       const next = new Set([...prev].filter((id) => valid.has(id)));
       return next.size === prev.size ? prev : next;
     });
-  }, [sessions]);
+  }, [sessions, loadError]);
 
   const handleToggleFavorite = (session: Session) => {
     const id = session.id;
@@ -832,7 +854,9 @@ export default function ConferenceScheduleApp() {
       if (!navigator.onLine) {
         queueAttendanceEvent(evt);
       } else {
-        postAttendanceEvent(APPS_SCRIPT_URL, evt).catch(() => queueAttendanceEvent(evt));
+        postAttendanceEvent(APPS_SCRIPT_URL, evt).catch(() =>
+          queueAttendanceEvent(evt)
+        );
       }
 
       scheduleCountsRefreshSoon();
@@ -872,7 +896,7 @@ export default function ConferenceScheduleApp() {
 
   const favoriteCount = favorites.size;
 
-    return (
+  return (
     <div className="min-h-screen bg-neutral-900/5 py-6 px-3 md:px-6 font-[Calibri,_system-ui,_sans-serif]">
       <div className="mx-auto flex max-w-5xl flex-col gap-5">
         {/* Header */}
