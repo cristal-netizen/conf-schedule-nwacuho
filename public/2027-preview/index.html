@@ -1,0 +1,1945 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="A modern NWACUHO 2027 conference and community design concept."
+    />
+    <title>NWACUHO 2027 · Design preview</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <style>
+      :root {
+        --bg: #f5f3ed;
+        --paper: #fff;
+        --ink: #144b60;
+        --muted: #566d72;
+        --line: #dee6e2;
+        --coral: #bd100c;
+        --green: #eaf0e1;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        color: var(--ink);
+        font-size: 14px;
+      }
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+      button,
+      a {
+        touch-action: manipulation;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible,
+      select:focus-visible {
+        outline: 3px solid #bd100c;
+        outline-offset: 4px;
+      }
+      button {
+        border: 0;
+        background: none;
+        color: inherit;
+      }
+      a {
+        color: inherit;
+      }
+      .top {
+        height: 82px;
+        background: var(--paper);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 38px;
+        gap: 20px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+      }
+      .mark {
+        background: var(--ink);
+        color: white;
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        font-size: 22px;
+      }
+      .brand strong {
+        letter-spacing: 2px;
+        font-size: 18px;
+      }
+      .brand small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 1.4px;
+        margin-top: 4px;
+      }
+      .top-right {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .demo {
+        font-size: 11px;
+        border: 1px solid var(--line);
+        padding: 6px 10px;
+        border-radius: 20px;
+        color: var(--muted);
+      }
+      .avatar {
+        height: 37px;
+        width: 37px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #eddcca;
+        color: #594437;
+        font-weight: 650;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+      .app {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        min-height: calc(100vh - 82px);
+      }
+      aside.sidebar {
+        padding: 32px 20px;
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+      }
+      .small-label {
+        text-transform: uppercase;
+        letter-spacing: 1.6px;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      nav {
+        display: grid;
+        gap: 7px;
+        margin-top: 15px;
+      }
+      .navbtn {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 13px 15px;
+        border-radius: 10px;
+        text-align: left;
+        color: var(--muted);
+        font-weight: 550;
+      }
+      .navbtn.active {
+        background: var(--ink);
+        color: #fff;
+      }
+      .nav-icon {
+        font-size: 17px;
+        width: 20px;
+        text-align: center;
+      }
+      .pill {
+        margin-left: auto;
+        border-radius: 5px;
+        background: #ffffff25;
+        padding: 2px 6px;
+        font-size: 10px;
+      }
+      .side-note {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 18px;
+        margin-top: auto;
+        background: #eef2e5;
+        line-height: 1.6;
+      }
+      .side-note p {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .side-note button {
+        text-decoration: underline;
+        padding: 0;
+        font-weight: 650;
+        font-size: 12px;
+      }
+      .main {
+        max-width: 1470px;
+        width: 100%;
+        padding: 30px 34px 40px;
+        margin: auto;
+      }
+      .hero {
+        background: var(--ink);
+        color: white;
+        border-radius: 19px;
+        padding: 30px 34px;
+        position: relative;
+        overflow: hidden;
+        min-height: 190px;
+        margin-bottom: 28px;
+        display: flex;
+        align-items: center;
+      }
+      .hero-copy {
+        position: relative;
+        z-index: 1;
+        max-width: 65%;
+      }
+      .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 10px;
+        color: #d3e3dc;
+        font-weight: 600;
+      }
+      h1 {
+        font-size: 42px;
+        letter-spacing: -1.9px;
+        line-height: 1.08;
+        font-weight: 550;
+        margin: 14px 0;
+      }
+      .hero p {
+        font-size: 13px;
+        color: #d9e8e4;
+        line-height: 1.6;
+        margin: 0;
+      }
+      .hero-art {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 37%;
+        height: 100%;
+        opacity: 0.8;
+      }
+      .datebadge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #ffffff40;
+        padding: 7px 11px;
+        border-radius: 20px;
+        font-size: 11px;
+        margin-top: 17px;
+      }
+      .content-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 288px;
+        gap: 26px;
+      }
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      h2 {
+        font-size: 23px;
+        letter-spacing: -0.7px;
+        margin: 0;
+        font-weight: 650;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .sub {
+        font-size: 12px;
+        margin: 6px 0 0;
+      }
+      .primary {
+        background: var(--coral);
+        color: white;
+        border-radius: 9px;
+        padding: 11px 16px;
+        font-weight: 600;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .filters {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+        margin: 18px 0;
+      }
+      .filter {
+        padding: 8px 13px;
+        border-radius: 20px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        font-size: 12px;
+        background: white;
+      }
+      .filter.active {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: white;
+      }
+      .search {
+        width: 100%;
+        border: 1px solid var(--line);
+        padding: 11px 14px;
+        border-radius: 10px;
+        background: white;
+        color: var(--ink);
+        margin: 0 0 3px;
+      }
+      .post {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 13px;
+      }
+      .post.pinned {
+        border-left: 3px solid var(--coral);
+        background: #fffdf9;
+      }
+      .pin {
+        font-size: 10px;
+        color: var(--coral);
+        font-weight: 700;
+        margin-bottom: 13px;
+        letter-spacing: 0.6px;
+      }
+      .author {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .author strong {
+        font-size: 12px;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+      .tag {
+        font-size: 9px;
+        padding: 4px 7px;
+        border-radius: 4px;
+        background: #edf2e9;
+        color: #3d6624;
+        margin-left: auto;
+        white-space: nowrap;
+      }
+      .post h3 {
+        margin: 16px 0 7px;
+        font-size: 16px;
+        letter-spacing: -0.3px;
+      }
+      .post p {
+        color: #58665f;
+        line-height: 1.65;
+        font-size: 12px;
+        margin: 0;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .post-foot {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        border-top: 1px solid #edf0e9;
+        margin-top: 17px;
+        padding-top: 12px;
+      }
+      .post-foot button {
+        color: var(--muted);
+        font-size: 11px;
+        padding: 4px 0;
+      }
+      .post-foot button.liked {
+        color: var(--coral);
+      }
+      .post-foot .reply-action {
+        margin-left: auto;
+        color: var(--ink);
+        font-weight: 650;
+      }
+      .rail {
+        display: flex;
+        flex-direction: column;
+        gap: 17px;
+      }
+      .panel {
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: white;
+        padding: 20px;
+      }
+      .panel h3 {
+        font-size: 14px;
+        margin: 0 0 14px;
+      }
+      .tiny {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .session-mini {
+        padding: 13px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .session-mini:last-of-type {
+        border-bottom: 0;
+      }
+      .session-mini strong {
+        display: block;
+        font-size: 12px;
+        margin: 6px 0;
+        line-height: 1.5;
+      }
+      .time {
+        font-size: 10px;
+        font-weight: 650;
+        color: var(--coral);
+      }
+      .text-btn {
+        font-size: 11px;
+        font-weight: 650;
+        padding: 11px 0 0;
+      }
+      .connection {
+        background: #eef2e5;
+        border: 0;
+      }
+      .connection p {
+        font-size: 12px;
+        color: #536a53;
+        line-height: 1.65;
+      }
+      .member-stack {
+        display: flex;
+        margin: 15px 0;
+      }
+      .member-stack .avatar {
+        border: 2px solid #eef2e5;
+        margin-right: -8px;
+        width: 34px;
+        height: 34px;
+      }
+      .help-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+        width: 100%;
+        text-align: left;
+      }
+      .footer {
+        margin-top: 23px;
+        font-size: 10px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+      }
+      .reply-list {
+        margin-top: 15px;
+        border-top: 1px solid var(--line);
+        padding-top: 8px;
+      }
+      .reply {
+        padding: 11px 0;
+      }
+      .reply strong {
+        font-size: 11px;
+      }
+      .reply p {
+        font-size: 12px;
+        margin-top: 5px;
+      }
+      .reply-form {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .reply-form input {
+        min-width: 0;
+        flex: 1;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .empty {
+        text-align: center;
+        padding: 36px;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        color: var(--muted);
+      }
+      .schedule-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 12px;
+      }
+      .schedule-card .session-body {
+        flex: 1;
+      }
+      .schedule-card h3 {
+        margin: 4px 0 8px;
+        font-size: 16px;
+      }
+      .schedule-card p {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .save {
+        border: 1px solid var(--line);
+        padding: 8px 11px;
+        border-radius: 8px;
+        font-size: 11px;
+        min-width: 64px;
+      }
+      .save.saved {
+        background: var(--green);
+        color: var(--ink);
+      }
+      dialog {
+        width: min(490px, calc(100% - 30px));
+        border: 0;
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: 0 20px 100px #142e3440;
+        color: var(--ink);
+      }
+      dialog::backdrop {
+        background: #12362bd0;
+        backdrop-filter: blur(4px);
+      }
+      dialog h2 {
+        margin-bottom: 8px;
+      }
+      dialog p {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 18px;
+      }
+      dialog input,
+      dialog textarea,
+      dialog select {
+        width: 100%;
+        padding: 11px;
+        border: 1px solid #ced6cb;
+        border-radius: 8px;
+        margin-top: 7px;
+        color: var(--ink);
+        background: white;
+      }
+      dialog textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 22px;
+      }
+      .cancel {
+        padding: 10px;
+      }
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--ink);
+        color: white;
+        padding: 13px 22px;
+        border-radius: 10px;
+        font-size: 12px;
+        z-index: 10;
+        box-shadow: 0 10px 30px #0002;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .board-notice {
+        font-size: 10px;
+        color: var(--muted);
+        margin: 12px 0 0;
+        line-height: 1.5;
+      }
+      @media (min-width: 1500px) {
+        .main {
+          padding: 40px 50px;
+        }
+      }
+      @media (max-width: 1150px) {
+        .app {
+          grid-template-columns: 184px 1fr;
+        }
+        .main {
+          padding: 25px;
+        }
+        .content-grid {
+          grid-template-columns: 1fr 248px;
+        }
+        .top {
+          padding: 0 25px;
+        }
+        .hero {
+          padding: 27px;
+        }
+        h1 {
+          font-size: 36px;
+        }
+        .sidebar {
+          padding: 25px 12px !important;
+        }
+        .post {
+          padding: 17px;
+        }
+      }
+      @media (max-width: 950px) {
+        .rail {
+          display: none;
+        }
+        .content-grid {
+          grid-template-columns: 1fr;
+        }
+        .hero-copy {
+          max-width: 75%;
+        }
+      }
+      @media (max-width: 640px) {
+        .top {
+          height: 68px;
+          padding: 0 18px;
+        }
+        .brand strong {
+          font-size: 15px;
+        }
+        .brand small {
+          font-size: 8px;
+        }
+        .top-right {
+          gap: 8px;
+        }
+        .top-right .muted {
+          display: none;
+        }
+        .demo {
+          font-size: 9px;
+          padding: 5px 7px;
+        }
+        .app {
+          display: block;
+        }
+        .sidebar {
+          border: 0 !important;
+          padding: 0 !important;
+          position: sticky;
+          top: 0;
+          background: var(--bg);
+          z-index: 3;
+        }
+        .sidebar > .small-label,
+        .sidebar .side-note {
+          display: none;
+        }
+        nav {
+          margin: 0;
+          padding: 10px 12px;
+          display: flex;
+          justify-content: space-between;
+          border-bottom: 1px solid var(--line);
+          gap: 4px;
+        }
+        .navbtn {
+          font-size: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 8px 7px;
+          flex: 1;
+          border-radius: 8px;
+        }
+        .pill {
+          display: none;
+        }
+        .main {
+          padding: 18px 16px 30px;
+        }
+        .hero {
+          padding: 24px 22px;
+          min-height: 195px;
+          border-radius: 15px;
+          margin-bottom: 24px;
+        }
+        .hero-copy {
+          max-width: 90%;
+        }
+        .hero-art {
+          opacity: 0.35;
+          width: 55%;
+        }
+        h1 {
+          font-size: 35px;
+        }
+        .hero p {
+          font-size: 12px;
+        }
+        .eyebrow {
+          font-size: 9px;
+        }
+        .section-head h2 {
+          font-size: 22px;
+        }
+        .section-head {
+          align-items: flex-start;
+        }
+        .primary {
+          font-size: 11px;
+          padding: 10px 12px;
+        }
+        .sub {
+          max-width: 190px;
+          line-height: 1.6;
+        }
+        .filters {
+          gap: 6px;
+        }
+        .filter {
+          padding: 7px 11px;
+          font-size: 11px;
+        }
+        .post {
+          padding: 17px;
+        }
+        .tag {
+          font-size: 8px;
+        }
+        .author .avatar {
+          width: 32px;
+          height: 32px;
+        }
+        .schedule-card {
+          gap: 12px;
+          padding: 16px;
+          flex-wrap: wrap;
+        }
+        .schedule-card > .time {
+          width: 100%;
+        }
+        .footer {
+          line-height: 1.6;
+        }
+        .footer span:last-child {
+          display: none;
+        }
+      }
+
+      /* Display the original transparent logo without its surrounding canvas. */
+      .logo-crop {
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+        aspect-ratio: 1214 / 1402;
+      }
+      .logo-crop img {
+        position: absolute;
+        width: 168.7%;
+        max-width: none;
+        height: auto;
+        left: -34.35%;
+        top: -6.42%;
+      }
+      .header-logo {
+        width: 36px;
+        height: 42px;
+      }
+      .hero {
+        min-height: 268px;
+        background: #144b60;
+        border-top: 4px solid #4d8420;
+      }
+      .hero-logo {
+        position: absolute;
+        right: 40px;
+        top: 19px;
+        width: 193px;
+        height: 223px;
+      }
+      .hero-copy {
+        max-width: 65%;
+      }
+      .brand strong {
+        letter-spacing: 1.3px;
+      }
+      .connection {
+        background: #e9efdf;
+      }
+      .connection p {
+        color: #4d652f;
+      }
+      .avatar {
+        background: #dce9e6;
+        color: #144b60;
+      }
+      .tag {
+        background: #edf2e6;
+        color: #3d6624;
+      }
+      .primary:hover {
+        background: #9d0c09;
+      }
+      .filter:hover:not(.active) {
+        background: #edf2e6;
+      }
+      @media (max-width: 1150px) {
+        .hero-logo {
+          width: 162px;
+          height: 187px;
+          right: 25px;
+          top: 38px;
+        }
+      }
+      @media (max-width: 640px) {
+        .header-logo {
+          width: 30px;
+          height: 35px;
+        }
+        .hero {
+          min-height: 231px;
+          padding: 24px 20px;
+        }
+        .hero-logo {
+          width: 87px;
+          height: 101px;
+          right: 15px;
+          top: 30px;
+        }
+        .hero-copy {
+          max-width: 71%;
+        }
+        .hero h1 {
+          font-size: 30px;
+          letter-spacing: -1.2px;
+        }
+        .hero p {
+          font-size: 11px;
+        }
+        .hero .eyebrow {
+          font-size: 8px;
+          line-height: 1.6;
+        }
+        .hero .datebadge {
+          font-size: 9px;
+          padding: 7px 8px;
+        }
+        .brand strong {
+          font-size: 14px;
+        }
+      }
+
+      .network-summary {
+        display: flex;
+        gap: 14px;
+        background: #eaf0e5;
+        border: 1px solid #dbe5d3;
+        padding: 17px;
+        border-radius: 13px;
+        margin-bottom: 17px;
+        align-items: center;
+      }
+      .network-summary p {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 4px 0;
+        line-height: 1.6;
+      }
+      .network-summary button {
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+      .attendee-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 13px;
+      }
+      .attendee {
+        padding: 20px;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .attendee .avatar {
+        width: 46px;
+        height: 46px;
+        font-size: 15px;
+      }
+      .attendee-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .attendee h3 {
+        font-size: 15px;
+        margin: 0 0 4px;
+      }
+      .attendee p {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.6;
+        margin: 0;
+      }
+      .interest-tags {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+      .interest-tags span {
+        padding: 5px 7px;
+        border-radius: 5px;
+        background: #edf2e6;
+        font-size: 9px;
+        color: #3d6624;
+      }
+      .interest-tags .shared {
+        background: #d9e6dc;
+        color: #144b60;
+      }
+      .match-label {
+        font-size: 10px;
+        color: #3d6624;
+        font-weight: 650;
+      }
+      .attendee-actions {
+        margin-top: auto;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .attendee-actions button {
+        padding: 9px 11px;
+        border-radius: 8px;
+        font-size: 11px;
+        border: 1px solid var(--line);
+      }
+      .attendee-actions .connect {
+        background: var(--ink);
+        color: white;
+        border-color: var(--ink);
+      }
+      .attendee-actions .connected {
+        background: #edf2e6;
+        color: var(--ink);
+        border: 1px solid #d8e3cf;
+      }
+      .profile-link {
+        text-align: left;
+        font-size: 11px;
+        text-decoration: underline;
+        color: var(--muted);
+        padding: 0;
+        align-self: flex-start;
+      }
+      .network-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      .network-controls .search {
+        margin: 0;
+        flex: 1;
+        min-width: 0;
+      }
+      .network-controls select {
+        width: 160px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: white;
+        padding: 10px;
+        color: var(--ink);
+        font-size: 12px;
+      }
+      .profile-picks {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .profile-picks label {
+        margin: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 9px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+      }
+      .profile-picks input {
+        width: auto;
+        margin: 0;
+      }
+      .invitation-card {
+        margin: 12px 0;
+        padding: 17px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: white;
+      }
+      .invitation-card p {
+        margin: 7px 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .network-tab-count {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 15px;
+      }
+      @media (max-width: 1100px) and (min-width: 951px) {
+        .attendee-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 640px) {
+        .navbtn {
+          font-size: 9px;
+          padding: 7px 3px;
+        }
+        .attendee-grid {
+          grid-template-columns: 1fr;
+        }
+        .network-summary {
+          padding: 14px;
+          align-items: flex-start;
+        }
+        .network-controls {
+          flex-direction: column;
+        }
+        .network-controls select {
+          width: 100%;
+        }
+        .network-summary .avatar {
+          display: none;
+        }
+        .network-summary button {
+          font-size: 10px;
+        }
+        .attendee {
+          padding: 17px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <div class="logo-crop header-logo">
+          <img
+            src="/2027-preview/conference-logo.png"
+            alt="NWACUHO 2027 Vancouver conference logo"
+          />
+        </div>
+        <div>
+          <strong>NWACUHO<span style="color: #bd100c">27</span></strong
+          ><small>VANCOUVER · BRITISH COLUMBIA</small>
+        </div>
+      </div>
+      <div class="top-right">
+        <span class="demo">2027 design preview</span
+        ><span class="muted" style="font-size: 12px">Hello, attendee</span>
+        <div class="avatar">YOU</div>
+      </div>
+    </header>
+    <div class="app">
+      <aside class="sidebar">
+        <div>
+          <div class="small-label">Your conference</div>
+          <nav aria-label="Main navigation">
+            <button class="navbtn" data-view="today">
+              <span class="nav-icon">◷</span>Today</button
+            ><button class="navbtn" data-view="schedule">
+              <span class="nav-icon">▦</span>Schedule</button
+            ><button class="navbtn" data-view="saved">
+              <span class="nav-icon">☆</span>My schedule<span
+                class="pill"
+                id="savedCount"
+                >0</span
+              ></button
+            ><button class="navbtn active" data-view="community">
+              <span class="nav-icon">☏</span>Community</button
+            ><button class="navbtn" data-view="networking">
+              <span class="nav-icon">◎</span>Networking</button
+            ><button class="navbtn" data-view="guide">
+              <span class="nav-icon">⌁</span>Conference guide
+            </button>
+          </nav>
+        </div>
+        <div class="side-note">
+          <div style="font-size: 22px">✳</div>
+          <strong>New faces. Shared purpose.</strong>
+          <p>Your next great connection might start with a simple hello.</p>
+          <button id="introduce">Introduce yourself →</button>
+        </div>
+      </aside>
+      <main class="main">
+        <section class="hero">
+          <div class="hero-copy">
+            <div class="eyebrow">NWACUHO ANNUAL CONFERENCE · 2027</div>
+            <h1>Gather here.<br />Grow together.</h1>
+            <p>
+              Three days of ideas, connection, and community.<br />One place to
+              make the most of it.
+            </p>
+            <div class="datebadge">
+              FEB 8–10 <span style="opacity: 0.4">|</span> VANCOUVER, BC
+            </div>
+          </div>
+          <div class="hero-logo logo-crop">
+            <img
+              src="/2027-preview/conference-logo.png"
+              alt="Vancouver skyline, mountains, and maple leaves inside the green NWACUHO 2027 hexagon"
+            />
+          </div>
+        </section>
+        <div class="content-grid">
+          <section id="view" aria-live="polite"></section>
+          <div class="rail">
+            <section class="panel">
+              <div class="small-label" style="margin-bottom: 12px">
+                A peek at day one
+              </div>
+              <h3>Make room for good ideas.</h3>
+              <div class="session-mini">
+                <span class="time">12:00 PM · SAMPLE</span
+                ><strong>Welcome & opening conversation</strong
+                ><span class="tiny">Conference gathering space · TBC</span>
+              </div>
+              <div class="session-mini">
+                <span class="time">1:30 PM · SAMPLE</span
+                ><strong>Building teams that thrive</strong
+                ><span class="tiny">Breakout room · TBC</span>
+              </div>
+              <button class="text-btn" data-goto="schedule">
+                Explore the schedule →
+              </button>
+            </section>
+            <section class="panel connection">
+              <div class="small-label">Better together</div>
+              <h3 style="margin: 12px 0 5px">Find your people.</h3>
+              <p>
+                First conference? Looking for a coffee buddy? Start a
+                conversation.
+              </p>
+              <div class="member-stack">
+                <div class="avatar">JT</div>
+                <div class="avatar" style="background: #d4e2d0">AL</div>
+                <div class="avatar" style="background: #eedac9">MR</div>
+                <div class="avatar" style="background: #dfddef">SK</div>
+              </div>
+              <button class="text-btn" data-goto="networking">
+                Meet the community →</button
+              ><br /><button class="text-btn" id="meetup">
+                Explore meetups →
+              </button>
+            </section>
+            <section class="panel">
+              <h3>Good to know</h3>
+              <button class="help-row" data-info="venue">
+                Venue & getting around <span>↗</span></button
+              ><button class="help-row" data-info="access">
+                Accessibility & quiet spaces <span>↗</span></button
+              ><button class="help-row" data-info="help">
+                Ask the conference team <span>↗</span>
+              </button>
+            </section>
+          </div>
+        </div>
+        <footer class="footer">
+          <span>Design sample · Fictional people, posts & session details</span
+          ><span>Made for connection. Built for the Northwest.</span>
+        </footer>
+      </main>
+    </div>
+    <dialog id="compose" aria-labelledby="composeTitle">
+      <form id="postForm">
+        <h2 id="composeTitle">Start a conversation</h2>
+        <p>Ask a question, share an idea, or find your conference people.</p>
+        <label
+          >Channel<select name="category">
+            <option>General</option>
+            <option>Meetups</option>
+            <option>Questions</option>
+            <option>Introductions</option>
+          </select></label
+        ><label
+          >Title<input
+            name="title"
+            required
+            maxlength="120"
+            placeholder="What’s on your mind?" /></label
+        ><label
+          >Message<textarea
+            name="body"
+            required
+            maxlength="2000"
+            placeholder="Share a little more…"
+          ></textarea>
+        </label>
+        <p class="board-notice">
+          Demo only: your posts stay in this browser. They are not sent to other
+          attendees.
+        </p>
+        <div class="modal-actions">
+          <button type="button" class="cancel" id="cancelPost">Cancel</button
+          ><button class="primary" type="submit">Post message ↗</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="infoModal" aria-labelledby="infoTitle">
+      <h2 id="infoTitle"></h2>
+      <div id="infoBody"></div>
+      <div class="modal-actions">
+        <button class="primary" id="closeInfo">Got it</button>
+      </div>
+    </dialog>
+    <div class="toast" id="toast" role="status" hidden></div>
+    <script>
+      const seeds = [
+        {
+          id: "welcome",
+          name: "Conference team",
+          initials: "NC",
+          role: "Organizer · Sample post",
+          category: "General",
+          title: "Welcome to your Vancouver community 👋",
+          body: "This is your space to connect before, during, and after the conference. Introduce yourself, ask a question, or invite someone to join you for coffee. Let’s make everyone feel welcome.",
+          likes: 18,
+          pinned: true,
+          replies: [
+            {
+              name: "Jamie T. · Demo attendee",
+              body: "Excited to meet everyone! This will be my first NWACUHO conference.",
+            },
+          ],
+        },
+        {
+          id: "coffee",
+          name: "Alex L.",
+          initials: "AL",
+          role: "Demo attendee · 15 min ago",
+          category: "Meetups",
+          title: "Coffee before the opening session?",
+          body: "Anyone arriving early on Monday? I’d love to meet a few fellow housing folks for coffee near the hotel. First-timers very welcome!",
+          likes: 7,
+          replies: [
+            {
+              name: "Morgan R. · Demo attendee",
+              body: "Count me in! Let’s pick a spot once we arrive.",
+            },
+          ],
+        },
+        {
+          id: "question",
+          name: "Morgan R.",
+          initials: "MR",
+          role: "Demo attendee · 32 min ago",
+          category: "Questions",
+          title: "What’s one thing you always bring to a conference?",
+          body: "Building my packing list and would love your tried-and-true essentials. Comfortable shoes and a notebook are already on mine.",
+          likes: 4,
+          replies: [
+            {
+              name: "Sam K. · Demo attendee",
+              body: "A portable charger and a refillable water bottle.",
+            },
+          ],
+        },
+        {
+          id: "hello",
+          name: "Sam K.",
+          initials: "SK",
+          role: "Demo attendee · 1 hr ago",
+          category: "Introductions",
+          title: "Hello from a first-time attendee!",
+          body: "I work in residence life and I’m especially interested in student belonging and supporting our staff. Looking forward to learning with this community.",
+          likes: 11,
+          replies: [],
+        },
+      ];
+      function read(k, f) {
+        try {
+          return JSON.parse(localStorage.getItem(k)) ?? f;
+        } catch {
+          return f;
+        }
+      }
+      const state = {
+        view: "community",
+        category: "All",
+        query: "",
+        day: 8,
+        posts: read("nwacuho:2027-preview:posts", seeds),
+        saved: read("nwacuho:2027-preview:saved", []),
+        liked: read("nwacuho:2027-preview:liked", []),
+        openReplies: new Set(),
+      };
+      function persist() {
+        try {
+          localStorage.setItem(
+            "nwacuho:2027-preview:posts",
+            JSON.stringify(state.posts),
+          );
+          localStorage.setItem(
+            "nwacuho:2027-preview:saved",
+            JSON.stringify(state.saved),
+          );
+          localStorage.setItem(
+            "nwacuho:2027-preview:liked",
+            JSON.stringify(state.liked),
+          );
+        } catch {
+          toast("Browser storage unavailable; changes last for this visit.");
+        }
+      }
+      const sessions = [
+        {
+          id: "s1",
+          day: 8,
+          time: "12:00 PM",
+          title: "Welcome & opening conversation",
+          type: "Gathering",
+          desc: "Meet the community and begin three days of shared learning.",
+        },
+        {
+          id: "s2",
+          day: 8,
+          time: "1:30 PM",
+          title: "Building teams that thrive",
+          type: "Leadership",
+          desc: "Explore practical ways to support, retain, and develop housing professionals.",
+        },
+        {
+          id: "s3",
+          day: 8,
+          time: "3:00 PM",
+          title: "Belonging starts with everyday moments",
+          type: "Residence life",
+          desc: "Small changes that help students feel seen, welcomed, and connected.",
+        },
+        {
+          id: "s4",
+          day: 9,
+          time: "9:00 AM",
+          title: "Fresh perspectives on housing operations",
+          type: "Operations",
+          desc: "Exchange ideas for clearer processes and better resident experiences.",
+        },
+        {
+          id: "s5",
+          day: 9,
+          time: "1:00 PM",
+          title: "A conversation about cultural humility",
+          type: "Community",
+          desc: "Reflect, listen, and learn with colleagues across our region.",
+        },
+        {
+          id: "s6",
+          day: 10,
+          time: "10:00 AM",
+          title: "Bring the learning home",
+          type: "Reflection",
+          desc: "Turn conference connections and ideas into your next steps.",
+        },
+      ];
+      const view = document.getElementById("view");
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      let timer;
+      function toast(t) {
+        const el = document.getElementById("toast");
+        el.textContent = t;
+        el.hidden = false;
+        clearTimeout(timer);
+        timer = setTimeout(() => (el.hidden = true), 3500);
+      }
+      function head(title, sub, action = "") {
+        return `<div class="section-head"><div><h2>${title}</h2><p class="sub muted">${sub}</p></div>${action}</div>`;
+      }
+      function card(p) {
+        return `<article class="post ${p.pinned ? "pinned" : ""}">${p.pinned ? '<div class="pin">↗ PINNED · FROM THE CONFERENCE TEAM</div>' : ""}<div class="author"><div class="avatar" style="background:${p.category === "Meetups" ? "#dce8d5" : p.category === "Introductions" ? "#e3def0" : "#efe2d1"}">${esc(p.initials)}</div><div><strong>${esc(p.name)}</strong><div class="meta">${esc(p.role)}</div></div><span class="tag">${esc(p.category)}</span></div><h3>${esc(p.title)}</h3><p>${esc(p.body)}</p><div class="post-foot"><button data-like="${p.id}" class="${state.liked.includes(p.id) ? "liked" : ""}" aria-pressed="${state.liked.includes(p.id)}">♡ ${p.likes} <span>likes</span></button><button data-reply="${p.id}" aria-expanded="${state.openReplies.has(p.id)}">▤ ${p.replies.length} replies</button><button class="reply-action" data-reply="${p.id}">Join conversation →</button></div>${state.openReplies.has(p.id) ? `<div class="reply-list">${p.replies.map((r) => `<div class="reply"><strong>${esc(r.name)}</strong><p>${esc(r.body)}</p></div>`).join("")}<form class="reply-form" data-reply-form="${p.id}"><input aria-label="Your reply" name="reply" required maxlength="1000" placeholder="Add a thoughtful reply…"><button class="primary">Reply</button></form></div>` : ""}</article>`;
+      }
+      function renderPosts() {
+        const posts = state.posts.filter(
+          (p) =>
+            (state.category === "All" || p.category === state.category) &&
+            [p.title, p.body, p.name]
+              .join(" ")
+              .toLowerCase()
+              .includes(state.query.toLowerCase()),
+        );
+        document.getElementById("posts").innerHTML = posts.length
+          ? posts.map(card).join("")
+          : '<div class="empty">No conversations found. Try another search or start one.</div>';
+      }
+      function render() {
+        document.querySelectorAll("[data-view]").forEach((b) => {
+          b.classList.toggle("active", b.dataset.view === state.view);
+          b.setAttribute(
+            "aria-current",
+            b.dataset.view === state.view ? "page" : "false",
+          );
+        });
+        document.getElementById("savedCount").textContent = state.saved.length;
+        if (state.view === "networking") {
+          renderNetworking();
+          return;
+        }
+        if (state.view === "community") {
+          view.innerHTML =
+            head(
+              "The community board",
+              "Good conversations start right here.",
+              '<button class="primary" id="newPost">+ New conversation</button>',
+            ) +
+            `<input class="search" id="search" type="search" aria-label="Search conversations" placeholder="Search conversations, questions, or people…" value="${esc(state.query)}"><div class="filters" aria-label="Conversation channels">${["All", "General", "Meetups", "Questions", "Introductions"].map((c) => `<button class="filter ${state.category === c ? "active" : ""}" data-category="${c}" aria-pressed="${state.category === c}">${c}</button>`).join("")}</div><div id="posts"></div><p class="board-notice">Be kind. Respect privacy. Keep conversations welcoming. · Local demo board</p>`;
+          renderPosts();
+          return;
+        }
+        if (["schedule", "saved", "today"].includes(state.view)) {
+          const saved = state.view === "saved";
+          const today = state.view === "today";
+          view.innerHTML =
+            head(
+              saved
+                ? "Your saved sessions"
+                : today
+                  ? "A good day to connect."
+                  : "Explore the program",
+              saved
+                ? "Make a little space for what inspires you."
+                : today
+                  ? "A preview of Monday, February 8."
+                  : "Sample sessions · Final program and rooms to be confirmed.",
+            ) +
+            (saved
+              ? ""
+              : `<div class="filters">${[8, 9, 10].map((d) => `<button class="filter ${state.day === d ? "active" : ""}" data-day="${d}">Feb ${d} · ${["Mon", "Tue", "Wed"][d - 8]}</button>`).join("")}</div>`);
+          const list = sessions.filter((s) =>
+            saved ? state.saved.includes(s.id) : s.day === state.day,
+          );
+          view.innerHTML += list.length
+            ? list
+                .map(
+                  (s) =>
+                    `<article class="schedule-card"><div class="time">${s.time}</div><div class="session-body"><span class="tag" style="margin:0">${s.type} · Sample</span><h3>${s.title}</h3><span class="tiny">Feb ${s.day} · Room to be confirmed</span><p>${s.desc}</p></div><button class="save ${state.saved.includes(s.id) ? "saved" : ""}" data-save="${s.id}" aria-pressed="${state.saved.includes(s.id)}">${state.saved.includes(s.id) ? "✓ Saved" : "+ Save"}</button></article>`,
+                )
+                .join("")
+            : '<div class="empty">Your schedule is a blank canvas.<br><button class="text-btn" data-goto="schedule">Find your first session →</button></div>';
+          return;
+        }
+        view.innerHTML =
+          head("Your conference guide", "The essentials, all in one place.") +
+          `<div class="panel"><h3>Vancouver, here we come.</h3><p class="muted" style="line-height:1.8">February 8–10, 2027<br>Sheraton Vancouver Wall Centre<br>1000 Burrard Street · Vancouver, BC</p><button class="help-row" data-info="venue">Venue & getting around <span>→</span></button><button class="help-row" data-info="access">Accessibility & quiet spaces <span>→</span></button><button class="help-row" data-info="help">Conference contacts <span>→</span></button><a class="help-row" href="https://nwacuho.org/page/AnnualConference" target="_blank" rel="noopener">Official conference information <span>↗</span></a><p class="board-notice">Concept preview: travel, Wi-Fi, room maps, and local recommendations will appear here once confirmed.</p></div>`;
+      }
+      function go(v) {
+        state.view = v;
+        if (v === "today") state.day = 8;
+        render();
+      }
+      function compose(c = "General") {
+        document.getElementById("postForm").reset();
+        document.querySelector("[name=category]").value = c;
+        document.getElementById("compose").showModal();
+      }
+      document.addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        if (!b) return;
+        if (b.dataset.view) go(b.dataset.view);
+        if (b.dataset.goto) go(b.dataset.goto);
+        if (b.dataset.category) {
+          state.category = b.dataset.category;
+          render();
+        }
+        if (b.id === "newPost") compose();
+        if (b.id === "introduce") compose("Introductions");
+        if (b.id === "meetup") {
+          state.category = "Meetups";
+          state.query = "";
+          go("community");
+        }
+        if (b.dataset.day) {
+          state.day = Number(b.dataset.day);
+          render();
+        }
+        if (b.dataset.like) {
+          const p = state.posts.find((p) => p.id === b.dataset.like);
+          const has = state.liked.includes(p.id);
+          p.likes += has ? -1 : 1;
+          state.liked = has
+            ? state.liked.filter((id) => id !== p.id)
+            : [...state.liked, p.id];
+          persist();
+          renderPosts();
+        }
+        if (b.dataset.reply) {
+          const id = b.dataset.reply;
+          state.openReplies.has(id)
+            ? state.openReplies.delete(id)
+            : state.openReplies.add(id);
+          renderPosts();
+        }
+        if (b.dataset.save) {
+          const id = b.dataset.save;
+          const has = state.saved.includes(id);
+          state.saved = has
+            ? state.saved.filter((x) => x !== id)
+            : [...state.saved, id];
+          persist();
+          render();
+          toast(
+            has
+              ? "Session removed from your schedule"
+              : "Saved to your schedule",
+          );
+        }
+        if (b.id === "cancelPost") document.getElementById("compose").close();
+        if (b.id === "closeInfo") document.getElementById("infoModal").close();
+        if (b.dataset.info) {
+          const map = {
+            venue: [
+              "Find your way",
+              "The 2027 conference is at the Sheraton Vancouver Wall Centre, 1000 Burrard Street. In the finished app, this panel will include verified floorplans, session room links, parking, and transit information.",
+            ],
+            access: [
+              "Everyone belongs here",
+              "This concept reserves a visible home for step-free routes, accessible washrooms, quiet-space locations and hours, and accommodation contacts. Vancouver details will be added once confirmed.",
+            ],
+            help: [
+              "We’re here to help",
+              "For official conference questions, email conference@nwacuho.org. The community board is intended for non-urgent attendee conversations. This demo does not send messages to the conference team.",
+            ],
+          };
+          document.getElementById("infoTitle").textContent =
+            map[b.dataset.info][0];
+          document.getElementById("infoBody").innerHTML =
+            "<p>" + esc(map[b.dataset.info][1]) + "</p>";
+          document.getElementById("infoModal").showModal();
+        }
+      });
+      document.addEventListener("input", (e) => {
+        if (e.target.id === "search") {
+          state.query = e.target.value;
+          renderPosts();
+        }
+      });
+      document.getElementById("postForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const f = new FormData(e.target),
+          title = f.get("title").trim(),
+          body = f.get("body").trim();
+        if (!title || !body) return;
+        state.posts.splice(1, 0, {
+          id: "p" + Date.now(),
+          name: "You",
+          initials: "YOU",
+          role: "You · Just now",
+          category: f.get("category"),
+          title,
+          body,
+          likes: 0,
+          replies: [],
+        });
+        state.category = "All";
+        state.query = "";
+        persist();
+        document.getElementById("compose").close();
+        go("community");
+        toast("Your demo conversation has been posted");
+      });
+      document.addEventListener("submit", (e) => {
+        const id = e.target.dataset.replyForm;
+        if (!id) return;
+        e.preventDefault();
+        const body = new FormData(e.target).get("reply").trim();
+        if (!body) return;
+        state.posts
+          .find((p) => p.id === id)
+          .replies.push({ name: "You · You", body });
+        persist();
+        renderPosts();
+        toast("Reply added to this demo conversation");
+      });
+      render();
+    </script>
+    <dialog id="networkDialog" aria-labelledby="networkTitle">
+      <h2 id="networkTitle"></h2>
+      <div id="networkBody"></div>
+      <div class="modal-actions">
+        <button class="primary" id="closeNetwork">Close</button>
+      </div>
+    </dialog>
+    <dialog id="editProfile" aria-labelledby="interestsTitle">
+      <form id="networkProfileForm">
+        <h2 id="interestsTitle">Your networking interests</h2>
+        <p>
+          Choose topics you would like to talk about. We’ll highlight people who
+          share them.
+        </p>
+        <div id="profilePicks" class="profile-picks"></div>
+        <p class="board-notice">
+          Your choices are saved in this browser for this prototype.
+        </p>
+        <div class="modal-actions">
+          <button class="cancel" type="button" id="cancelProfile">Cancel</button
+          ><button class="primary">Save interests</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="coffeeDialog" aria-labelledby="coffeeTitle">
+      <form id="coffeeForm">
+        <h2 id="coffeeTitle">Suggest a coffee meetup</h2>
+        <p>Make a low-pressure invitation to connect.</p>
+        <label
+          >When<select name="when">
+            <option>Feb 8 · Before opening session</option>
+            <option>Feb 9 · Morning break</option>
+            <option>Feb 9 · After sessions</option>
+            <option>Feb 10 · Morning break</option>
+          </select></label
+        ><label
+          >Meeting point<input
+            name="where"
+            required
+            maxlength="150"
+            value="Hotel lobby · coffee spot to be decided" /></label
+        ><label
+          >Your message<textarea name="message" required maxlength="1000">
+Hi! I’d love to exchange ideas over coffee during the conference. Would you be interested?</textarea>
+        </label>
+        <p class="board-notice">
+          Demo invitation only. No message will be sent and no meeting is
+          booked.
+        </p>
+        <div class="modal-actions">
+          <button class="cancel" type="button" id="cancelCoffee">Cancel</button
+          ><button class="primary">Save demo invitation</button>
+        </div>
+      </form>
+    </dialog>
+    <script>
+      const topics = [
+        "Communications",
+        "Residence life",
+        "Operations",
+        "Leadership",
+        "Student belonging",
+        "Technology",
+      ];
+      const attendees = [
+        {
+          id: "jamie",
+          name: "Jamie Taylor",
+          initials: "JT",
+          role: "Residence life",
+          institution: "Cedar Coast University",
+          topics: ["Residence life", "Student belonging", "Leadership"],
+          bio: "Interested in building inclusive communities and supporting new residence life professionals.",
+          color: "#e2e8d1",
+        },
+        {
+          id: "alex",
+          name: "Alex Lee",
+          initials: "AL",
+          role: "Operations",
+          institution: "Pacific Harbour College",
+          topics: ["Operations", "Technology", "Communications"],
+          bio: "Enjoys exchanging practical ideas for housing processes, clear communication, and tools that save staff time.",
+          color: "#d9e8ea",
+        },
+        {
+          id: "morgan",
+          name: "Morgan Rivera",
+          initials: "MR",
+          role: "Communications",
+          institution: "Rainier Valley University",
+          topics: ["Communications", "Student belonging", "Technology"],
+          bio: "Looking to compare resident outreach strategies and learn how colleagues make important information easier to find.",
+          color: "#efe1d5",
+        },
+        {
+          id: "sam",
+          name: "Sam Kim",
+          initials: "SK",
+          role: "Leadership",
+          institution: "North Shore Institute",
+          topics: ["Leadership", "Operations", "Residence life"],
+          bio: "Happy to talk about team development, supervision, and making conference learning useful back on campus.",
+          color: "#e4dfed",
+        },
+        {
+          id: "avery",
+          name: "Avery Chen",
+          initials: "AC",
+          role: "Residence life",
+          institution: "Evergreen Bay College",
+          topics: ["Student belonging", "Residence life", "Communications"],
+          bio: "First-time attendee hoping to meet peers and exchange ideas for student connection and belonging.",
+          color: "#e8e5d4",
+        },
+        {
+          id: "riley",
+          name: "Riley Morgan",
+          initials: "RM",
+          role: "Operations",
+          institution: "Mountain Sound University",
+          topics: ["Operations", "Leadership", "Technology"],
+          bio: "Interested in service design, staff workflows, and thoughtful uses of technology in housing.",
+          color: "#d8e7de",
+        },
+      ];
+      Object.assign(state, {
+        networkTab: "Discover",
+        networkQuery: "",
+        networkRole: "All roles",
+        networkTopic: "All interests",
+        interests: read("nwacuho:2027-preview:interests", [
+          "Communications",
+          "Operations",
+          "Technology",
+        ]),
+        connections: read("nwacuho:2027-preview:connections", []),
+        invites: read("nwacuho:2027-preview:invites", []),
+        invitePerson: null,
+      });
+      function saveNetwork() {
+        try {
+          localStorage.setItem(
+            "nwacuho:2027-preview:interests",
+            JSON.stringify(state.interests),
+          );
+          localStorage.setItem(
+            "nwacuho:2027-preview:connections",
+            JSON.stringify(state.connections),
+          );
+          localStorage.setItem(
+            "nwacuho:2027-preview:invites",
+            JSON.stringify(state.invites),
+          );
+        } catch {
+          toast("Changes are available for this visit only.");
+        }
+      }
+      function renderNetworking() {
+        view.innerHTML =
+          head(
+            "Find your people.",
+            "Turn shared interests into meaningful connections.",
+            '<button class="primary" id="editInterests">Edit my interests</button>',
+          ) +
+          `<div class="network-summary"><div class="avatar">YOU</div><div><strong style="font-size:12px">Your conversation starters</strong><p>${state.interests.length ? state.interests.map(esc).join(" · ") : "Add interests to discover common ground."}</p></div></div><div class="filters">${["Discover", "Connections", "Invitations"].map((t) => `<button class="filter ${state.networkTab === t ? "active" : ""}" data-network-tab="${t}" aria-pressed="${state.networkTab === t}">${t}${t === "Connections" ? " · " + state.connections.length : t === "Invitations" ? " · " + state.invites.length : ""}</button>`).join("")}</div>${state.networkTab === "Invitations" ? "" : `<div class="network-controls"><input type="search" class="search" id="networkSearch" aria-label="Search attendees" placeholder="Search name, institution, or interest…" value="${esc(state.networkQuery)}"><select id="networkRole" aria-label="Filter attendees by role">${["All roles", "Communications", "Residence life", "Operations", "Leadership"].map((r) => `<option ${state.networkRole === r ? "selected" : ""}>${r}</option>`).join("")}</select></div><div class="filters"><button class="filter ${state.networkTopic === "All interests" ? "active" : ""}" data-network-topic="All interests">All interests</button>${topics.map((t) => `<button class="filter ${state.networkTopic === t ? "active" : ""}" data-network-topic="${t}" aria-pressed="${state.networkTopic === t}">${t}</button>`).join("")}</div>`}<div id="networkResults"></div><p class="board-notice">All profiles and institutions are fictional. Connections and invitations stay in this browser; nobody is contacted. In the live app, attendees would choose whether to appear in the directory.</p>`;
+        renderNetworkResults();
+      }
+      function renderNetworkResults() {
+        const out = document.getElementById("networkResults");
+        if (state.networkTab === "Invitations") {
+          out.innerHTML = state.invites.length
+            ? state.invites
+                .map(
+                  (i) =>
+                    `<article class="invitation-card"><span class="tag">Demo invitation · Not sent</span><h3 style="font-size:15px">Coffee with ${esc(attendees.find((a) => a.id === i.person).name)}</h3><p>${esc(i.when)}<br>${esc(i.where)}</p><p>${esc(i.message)}</p><button class="text-btn" data-remove-invite="${i.id}">Remove invitation</button></article>`,
+                )
+                .join("")
+            : '<div class="empty">A conversation can start with coffee.<br>Choose an attendee and suggest a meetup.</div>';
+          return;
+        }
+        const shared = (a) =>
+          a.topics.filter((t) => state.interests.includes(t));
+        const list = attendees
+          .filter(
+            (a) =>
+              (state.networkTab !== "Connections" ||
+                state.connections.includes(a.id)) &&
+              (state.networkRole === "All roles" ||
+                state.networkRole === a.role) &&
+              (state.networkTopic === "All interests" ||
+                a.topics.includes(state.networkTopic)) &&
+              [a.name, a.institution, a.role, ...a.topics]
+                .join(" ")
+                .toLowerCase()
+                .includes(state.networkQuery.toLowerCase()),
+          )
+          .sort((a, b) => shared(b).length - shared(a).length);
+        out.innerHTML =
+          `<div class="network-tab-count">${list.length} demo attendee${list.length === 1 ? "" : "s"} · Sorted by shared interests</div>` +
+          (list.length
+            ? `<div class="attendee-grid">${list.map((a) => `<article class="attendee"><div class="attendee-top"><div class="avatar" style="background:${a.color}">${a.initials}</div><div><h3>${a.name}</h3><p>${a.role}<br>${a.institution}</p></div></div><span class="match-label">${shared(a).length ? shared(a).length + " shared interest" + (shared(a).length === 1 ? "" : "s") : "Explore a new perspective"}</span><div class="interest-tags">${a.topics.map((t) => `<span class="${state.interests.includes(t) ? "shared" : ""}">${t}</span>`).join("")}</div><p>${a.bio}</p><button class="profile-link" data-profile="${a.id}">View profile →</button><div class="attendee-actions"><button class="connect ${state.connections.includes(a.id) ? "connected" : ""}" data-connect="${a.id}" aria-pressed="${state.connections.includes(a.id)}">${state.connections.includes(a.id) ? "✓ Connected" : "+ Connect"}</button><button data-coffee="${a.id}">Coffee meetup ↗</button></div></article>`).join("")}</div>`
+            : '<div class="empty">No attendees match these filters.<br>Try another interest or role.</div>');
+      }
+      function connect(id) {
+        const has = state.connections.includes(id);
+        state.connections = has
+          ? state.connections.filter((x) => x !== id)
+          : [...state.connections, id];
+        saveNetwork();
+        renderNetworking();
+        toast(
+          has ? "Demo connection removed" : "Added to your demo connections",
+        );
+      }
+      function coffee(id) {
+        state.invitePerson = id;
+        document.getElementById("coffeeForm").reset();
+        document.getElementById("coffeeTitle").textContent =
+          "Coffee with " + attendees.find((a) => a.id === id).name;
+        document.getElementById("networkDialog").close();
+        document.getElementById("coffeeDialog").showModal();
+      }
+      function editInterests() {
+        document.getElementById("profilePicks").innerHTML = topics
+          .map(
+            (t) =>
+              `<label><input type="checkbox" name="interest" value="${t}" ${state.interests.includes(t) ? "checked" : ""}>${t}</label>`,
+          )
+          .join("");
+        document.getElementById("editProfile").showModal();
+      }
+      document.addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        if (!b) return;
+        if (b.dataset.networkTab) {
+          state.networkTab = b.dataset.networkTab;
+          renderNetworking();
+        }
+        if (b.dataset.networkTopic) {
+          state.networkTopic = b.dataset.networkTopic;
+          renderNetworking();
+        }
+        if (b.dataset.connect) connect(b.dataset.connect);
+        if (b.dataset.coffee) coffee(b.dataset.coffee);
+        if (b.id === "editInterests") editInterests();
+        if (b.id === "cancelProfile")
+          document.getElementById("editProfile").close();
+        if (b.id === "cancelCoffee")
+          document.getElementById("coffeeDialog").close();
+        if (b.id === "closeNetwork")
+          document.getElementById("networkDialog").close();
+        if (b.dataset.profile) {
+          const a = attendees.find((a) => a.id === b.dataset.profile);
+          document.getElementById("networkTitle").textContent = a.name;
+          document.getElementById("networkBody").innerHTML =
+            `<p>${a.role} · ${a.institution}</p><div class="interest-tags">${a.topics.map((t) => `<span>${t}</span>`).join("")}</div><p>${a.bio}</p><div class="attendee-actions"><button data-coffee="${a.id}">Suggest a coffee meetup ↗</button></div><p class="board-notice">Fictional profile for this prototype.</p>`;
+          document.getElementById("networkDialog").showModal();
+        }
+        if (b.dataset.removeInvite) {
+          state.invites = state.invites.filter(
+            (i) => i.id !== b.dataset.removeInvite,
+          );
+          saveNetwork();
+          renderNetworking();
+          toast("Demo invitation removed");
+        }
+      });
+      document.addEventListener("input", (e) => {
+        if (e.target.id === "networkSearch") {
+          state.networkQuery = e.target.value;
+          renderNetworkResults();
+        }
+      });
+      document.addEventListener("change", (e) => {
+        if (e.target.id === "networkRole") {
+          state.networkRole = e.target.value;
+          renderNetworkResults();
+        }
+      });
+      document
+        .getElementById("networkProfileForm")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          state.interests = new FormData(e.target).getAll("interest");
+          saveNetwork();
+          document.getElementById("editProfile").close();
+          renderNetworking();
+          toast("Networking interests updated");
+        });
+      document.getElementById("coffeeForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const f = new FormData(e.target),
+          where = f.get("where").trim(),
+          message = f.get("message").trim();
+        if (!where || !message) return;
+        state.invites.unshift({
+          id: "i" + Date.now(),
+          person: state.invitePerson,
+          when: f.get("when"),
+          where,
+          message,
+        });
+        saveNetwork();
+        document.getElementById("coffeeDialog").close();
+        state.networkTab = "Invitations";
+        go("networking");
+        toast("Demo invitation saved · No message sent");
+      });
+      go("networking");
+    </script>
+  </body>
+</html>

@@ -34,3 +34,30 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## 2027 conference design preview
+
+Open `/2027` on the local app or on the Vercel deployment for this branch.
+The preview is a standalone static prototype under `public/2027-preview`,
+served through a Next.js rewrite. It includes the supplied Vancouver logo,
+responsive navigation, a community board, attendee discovery by role and
+interest, local connections, coffee invitation drafts, and sample sessions.
+
+All attendees, institutions, posts, and session details are fictional samples.
+Posts, replies, interests, connections, saved sessions, and invitations persist
+only in the current browser, using separate `nwacuho:2027-preview:` storage
+keys. Invitations are drafts; the preview does not contact anyone. No account
+or shared networking backend has been added. The preview does not use or write
+to the existing Google Apps Script schedule or attendance service.
+
+The existing 2026 routes and schedule remain available at their current URLs.
+Before a live networking launch, implement attendee authentication, opt-in
+directory visibility, authorized shared storage, connection requests and
+acceptance, invitation delivery, and board moderation/reporting. Confirm the
+2027 program, venue information, and accessibility details with organizers.
+
+To check the prototype interactions, run:
+
+```bash
+node --test tests/2027-preview.test.cjs
+```
