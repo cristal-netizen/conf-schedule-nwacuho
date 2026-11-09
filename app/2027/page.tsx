@@ -11,7 +11,7 @@ async function readPublished(table: string, select = "*"): Promise<Row[]> {
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return [];
   const response = await fetch(`${url}/rest/v1/${table}?select=${encodeURIComponent(select)}&order=created_at.desc&limit=30`, {
-    headers: { apikey: key, Authorization: `Bearer ${key}` },
+    headers: { apikey: key },
     next: { revalidate: 60 },
   });
   if (!response.ok) return [];
