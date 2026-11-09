@@ -38,7 +38,8 @@ import { Label } from "@/components/ui/label";
 const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycby0pPaSuE0XhIwAqencFZTTEYtFT57wB648KDppSymJA4CSb1HHeQHnBPX1ZMbteZUy/exec";
 
-const FAVORITES_KEY = "nwacuho:favorites:v1";
+const FAVORITES_KEY = "nwacuho:favorites:2026:v1";
+const LEGACY_FAVORITES_KEY = "nwacuho:favorites:v1";
 
 // =======================
 // Types
@@ -77,7 +78,7 @@ type CountsResponse = {
 function loadFavorites(): Set<string> {
   try {
     if (typeof window === "undefined") return new Set();
-    const raw = localStorage.getItem(FAVORITES_KEY);
+    const raw = localStorage.getItem(FAVORITES_KEY) ?? localStorage.getItem(LEGACY_FAVORITES_KEY);
     const arr = raw ? (JSON.parse(raw) as unknown) : [];
     return new Set(Array.isArray(arr) ? (arr as string[]) : []);
   } catch {
@@ -718,7 +719,7 @@ export default function ConferenceScheduleApp() {
   const [onlyFavorites, setOnlyFavorites] = useState(false);
 
   const [sessions, setSessions] = useState<Session[]>(mockSessions);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [scheduleUpdated, setScheduleUpdated] = useState<string | null>(null);
@@ -745,7 +746,7 @@ export default function ConferenceScheduleApp() {
   // Sync favorites across tabs/windows
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === FAVORITES_KEY) setFavorites(loadFavorites());
+      if (e.key === FAVORITES_KEY || e.key === LEGACY_FAVORITES_KEY) setFavorites(loadFavorites());
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -770,7 +771,7 @@ export default function ConferenceScheduleApp() {
         if (!Array.isArray(data?.sessions)) {
           throw new Error("Missing sessions[] from Apps Script");
         }
-        setSessions(data.sessions);
+        setSessions(data.sessions.filter((session) => session && typeof session.id === "string" && typeof session.title === "string" && typeof session.day === "string" && typeof session.start === "string"));
         setScheduleUpdated(data?.lastUpdated ?? new Date().toISOString());
       })
       .catch((err) => {
@@ -811,7 +812,7 @@ export default function ConferenceScheduleApp() {
   // ✅ PRUNE FIX:
   // Only prune after we have a real sessions list (and not after a load error).
   useEffect(() => {
-    if (loadError) return;
+    if (loadError || loading) return;
     if (!sessions || sessions.length === 0) return;
 
     const valid = new Set(sessions.map((s) => s.id));
@@ -819,7 +820,7 @@ export default function ConferenceScheduleApp() {
       const next = new Set([...prev].filter((id) => valid.has(id)));
       return next.size === prev.size ? prev : next;
     });
-  }, [sessions, loadError]);
+  }, [sessions, loadError, loading]);
 
   const handleToggleFavorite = (session: Session) => {
     const id = session.id;
@@ -1062,7 +1063,14 @@ export default function ConferenceScheduleApp() {
             </div>
 
             <ScrollArea className="h-[60vh] min-h-[420px] pr-2">
-              {filteredSessions.length === 0 ? (
+              {loading ? (
+                <div role="status" className="flex h-48 items-center justify-center text-sm text-slate-600">Loading conference sessions…</div>
+              ) : loadError ? (
+                <div role="alert" className="flex h-48 flex-col items-center justify-center gap-3 text-center text-sm text-slate-700">
+                  <p>We couldn’t load the schedule. Please try again.</p>
+                  <Button variant="outline" size="sm" onClick={() => void refreshSchedule()}>Retry loading</Button>
+                </div>
+              ) : filteredSessions.length === 0 ? (
                 <div className="flex h-48 flex-col items-center justify-center text-center text-sm text-slate-500">
                   <p className="font-medium text-slate-700">
                     No sessions match your filters.
