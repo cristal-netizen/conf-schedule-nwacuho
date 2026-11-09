@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Noto_Sans, Noto_Serif } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import PwaRegister from "./PwaRegister";
@@ -30,7 +30,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#28903b",
+  themeColor: "#1F443E",
 };
 
 export default function RootLayout({
@@ -41,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-neutral-900/5`}
+        className={`${notoSans.variable} ${notoSerif.variable} bg-neutral-900/5`}
       >
         {/* PWA service worker registration */}
         <PwaRegister />
@@ -52,7 +52,7 @@ export default function RootLayout({
               NWACUHO 2026 · Seattle
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/" className="text-slate-700 hover:text-[#28903b]"
+              <Link href="/" className="text-slate-700 hover:text-[#1F443E]"
               >
                 Schedule
               </Link>
