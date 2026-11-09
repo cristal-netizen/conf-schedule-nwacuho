@@ -128,7 +128,7 @@ export default function AdminPage() {
           <label className="block text-sm">Message<textarea required value={body} onChange={e=>setBody(e.target.value)} rows={4} className="mt-1 w-full rounded border p-2"/></label>
           <button disabled={busy} className="rounded bg-[#1F443E] px-4 py-2 text-white disabled:opacity-50">Save draft</button>
         </form>
-        {announcements.map(item=><article key={item.id} className="rounded border p-3"><strong>{item.title}</strong><span className="ml-2 text-xs text-slate-500">{item.status}</span><p className="mt-1 whitespace-pre-wrap text-sm">{item.body}</p></article>)}
+        {announcements.map(item=><article key={item.id} className="rounded border p-3"><strong>{item.title}</strong><span className="ml-2 text-xs text-slate-500">{item.status}</span><p className="mt-1 whitespace-pre-wrap text-sm">{item.body}</p>{role==="admin" && <button disabled={busy} className="mt-3 rounded border px-3 py-2 text-sm" onClick={()=>void updateAnnouncementStatus(item,item.status==="published"?"draft":"published")}>{item.status==="published"?"Unpublish announcement":"Publish announcement"}</button>}</article>)}
       </section>
     </>}
   </div>;
