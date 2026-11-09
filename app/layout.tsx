@@ -1,92 +1,40 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Sans, Noto_Serif } from "next/font/google";
-import "./globals.css";
 import Link from "next/link";
 import PwaRegister from "./PwaRegister";
+import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const notoSans = Noto_Sans({ variable: "--font-noto-sans", subsets: ["latin"], display: "swap" });
+const notoSerif = Noto_Serif({ variable: "--font-noto-serif", subsets: ["latin"], display: "swap" });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata = {
-  title: "NWACUHO Conference Schedule",
-  description: "NWACUHO Annual Conference schedule and personal agenda.",
-  applicationName: "NWACUHO Conference Schedule",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "NWACUHO",
-  },
-  icons: {
-    icon: "/icons/icon-192.png",
-    apple: "/icons/apple-touch-icon.png",
-  },
+export const metadata: Metadata = {
+  title: "NWACUHO Conference",
+  description: "NWACUHO conference schedule and attendee information.",
+  applicationName: "NWACUHO Conference",
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
 };
+export const viewport: Viewport = { themeColor: "#1F443E" };
 
-export const viewport = {
-  themeColor: "#1F443E",
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${notoSans.variable} ${notoSerif.variable} bg-neutral-900/5`}
-      >
-        {/* PWA service worker registration */}
+    <html lang="en">
+      <body className={`${notoSans.variable} ${notoSerif.variable} bg-neutral-900/5`}>
         <PwaRegister />
-
-        <header className="w-full border-b border-slate-200 bg-white/80 backdrop-blur-sm">
-          <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2 text-xs md:text-sm">
-            <div className="font-semibold text-slate-900">
-              NWACUHO 2026 · Seattle
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/" className="text-slate-700 hover:text-[#1F443E]"
-              >
-                Schedule
-              </Link>
-              <Link
-                href="/info"
-                className="text-slate-700 hover:text-[#28903b]"
-              >
-                 Info
-              </Link>
-              <Link
-                href="/speakers"
-                className="text-slate-700 hover:text-[#28903b]"
-              >
-                Speakers
-              </Link>
-              <Link
-                href="/venue"
-                className="text-slate-700 hover:text-[#28903b]"
-              >
-                Venue Map
-              </Link>
-              <Link
-  href="/accessibility"
-  className="text-slate-700 hover:text-[#28903b]"
->
-  Accessibility
-</Link>
-
+        <header className="w-full border-b border-slate-200 bg-white/90">
+          <nav aria-label="Primary navigation" className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
+            <Link href="/" className="font-bold text-[#1F443E]">NWACUHO</Link>
+            <div className="flex flex-wrap gap-4">
+              <Link href="/">2026 Schedule</Link>
+              <Link href="/2027">2027 Preview</Link>
+              <Link href="/info">Info</Link>
+              <Link href="/speakers">Speakers</Link>
+              <Link href="/venue">Venue Map</Link>
+              <Link href="/accessibility">Accessibility</Link>
             </div>
           </nav>
         </header>
-        <div className="pt-2">{children}</div>
+        <main id="main-content">{children}</main>
       </body>
     </html>
   );
 }
-
