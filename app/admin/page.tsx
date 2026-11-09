@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import SessionManager from "./SessionManager";
 
 type RecordRow = { id: string; title: string; status: string; guide_type?: string; introduction?: string; body?: string; severity?: string; conference_id?: string };
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -94,6 +95,7 @@ export default function AdminPage() {
       <p className="text-xs text-slate-600">Accounts and editor roles must be provisioned by a trusted conference administrator. Credentials are not stored by this page.</p>
     </form> : <>
       <div className="flex items-center justify-between rounded-xl bg-white p-4"><p>Role: <strong>{role}</strong></p><button className="rounded border px-3 py-2" onClick={()=>{setToken("");setConferenceId("");setGuides([]);setAnnouncements([]);setMessage("Signed out.");}}>Sign out</button></div>
+      <SessionManager token={token} conferenceId={conferenceId} role={role} />
       <section className="space-y-4 rounded-xl border bg-white p-6">
         <h2 className="text-2xl font-semibold">Guides</h2>
         {guides.map(guide=><div key={guide.id} className="space-y-2 rounded-lg border p-4">
