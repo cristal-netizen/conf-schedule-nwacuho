@@ -24,7 +24,7 @@ export default function AdminPage() {
     if (!url || !key) throw new Error("Supabase preview environment variables are missing.");
     const response = await fetch(`${url}${path}`, {
       ...init,
-      headers: { apikey: key, Authorization: `Bearer ${bearer}`, "Content-Type": "application/json", ...(init?.headers || {}) },
+      headers: { apikey: key, ...(bearer !== key ? { Authorization: `Bearer ${bearer}` } : {}), "Content-Type": "application/json", ...(init?.headers || {}) },
       cache: "no-store",
     });
     const result = await response.json().catch(() => null);
