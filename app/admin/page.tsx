@@ -74,12 +74,27 @@ export default function AdminPage() {
     finally { setBusy(false); }
   }
 
-  async function updateGuide(guide: RecordRow, field: "title" | "introduction", value: string) {
+  async function updateGuide(guide: RecordRow, field: "title" | "introduction" | "status", value: string) {
     setBusy(true); setMessage("");
     try {
       await api(`/rest/v1/guides?id=eq.${guide.id}`, token, {method:"PATCH",body:JSON.stringify({[field]:value}),headers:{Prefer:"return=minimal"}});
       await loadData(token,conferenceId); setMessage("Guide updated.");
     } catch(error) { setMessage(error instanceof Error ? error.message : "Update failed."); }
+    finally { setBusy(false); }
+  }
+
+  async function updateAnnouncementStatus(item: RecordRow, status: "published" | "draft") {
+    if (role !== "admin") return;
+    setBusy(true); setMessage("");
+    try {
+      await api(`/rest/v1/announcements?id=eq.${item.id}&conference_id=eq.${conferenceId}`, token, {
+        method: "PATCH",
+        body: JSON.stringify({status, published_at: status==="published" ? new Date().toISOString() : null}),
+        headers: {Prefer:"return=minimal"}
+      });
+      await loadData(token, conferenceId);
+      setMessage("Announcement status updated.");
+    } catch (error) { setMessage(error instanceof Error?error.message:"Update failed."); }
     finally { setBusy(false); }
   }
 
@@ -98,10 +113,12 @@ export default function AdminPage() {
       <SessionManager token={token} conferenceId={conferenceId} role={role} />
       <section className="space-y-4 rounded-xl border bg-white p-6">
         <h2 className="text-2xl font-semibold">Guides</h2>
+        <p className="text-sm text-slate-600">Editors manage drafts. Only administrators publish guides.</p>
         {guides.map(guide=><div key={guide.id} className="space-y-2 rounded-lg border p-4">
           <h3 className="font-semibold">{guide.title} <span className="text-xs font-normal text-slate-500">({guide.status})</span></h3>
-          <label className="block text-sm">Title<input aria-label={`Title for ${guide.guide_type}`} defaultValue={guide.title} key={guide.id+"title"} onBlur={e=>{if(e.target.value!==guide.title) void updateGuide(guide,"title",e.target.value);}} className="mt-1 w-full rounded border p-2"/></label>
-          <label className="block text-sm">Introduction<textarea aria-label={`Introduction for ${guide.guide_type}`} defaultValue={guide.introduction || ""} key={guide.id+"intro"} onBlur={e=>{if(e.target.value!==(guide.introduction||"")) void updateGuide(guide,"introduction",e.target.value);}} className="mt-1 w-full rounded border p-2" rows={3}/></label>
+          <label className="block text-sm">Title<input aria-label={`Title for ${guide.guide_type}`} disabled={busy || (role!=="admin" && guide.status!=="draft")} defaultValue={guide.title} key={guide.id+"title"} onBlur={e=>{if(e.target.value!==guide.title) void updateGuide(guide,"title",e.target.value);}} className="mt-1 w-full rounded border p-2"/></label>
+          <label className="block text-sm">Introduction<textarea aria-label={`Introduction for ${guide.guide_type}`} disabled={busy || (role!=="admin" && guide.status!=="draft")} defaultValue={guide.introduction || ""} key={guide.id+"intro"} onBlur={e=>{if(e.target.value!==(guide.introduction||"")) void updateGuide(guide,"introduction",e.target.value);}} className="mt-1 w-full rounded border p-2" rows={3}/></label>
+          {role==="admin" && <button disabled={busy} className="rounded border px-3 py-2 text-sm" onClick={()=>void updateGuide(guide,"status",guide.status==="published"?"draft":"published")}>{guide.status==="published"?"Unpublish guide":"Publish guide"}</button>}
         </div>)}
       </section>
       <section className="space-y-4 rounded-xl border bg-white p-6">
