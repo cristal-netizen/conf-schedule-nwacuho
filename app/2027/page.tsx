@@ -18,11 +18,13 @@ async function readPublished(table: string, select = "*"): Promise<Row[]> {
   return (await response.json()) as Row[];
 }
 export default async function Conference2027() {
-  const [conferences, announcements] = await Promise.all([
+  const [conferences, announcements, sessions] = await Promise.all([
     readPublished("conferences", "id,name,city,year,status"),
     readPublished("announcements", "id,title,body,severity,published_at"),
+    readPublished("sessions", "id,title,description,starts_at,ends_at,session_type,status"),
   ]);
   const conference = conferences.find((row) => row.year === 2027 && row.status === "published");
+  const visibleSessions = sessions.filter(row => row.status === "published" && typeof row.starts_at === "string").sort((a,b)=>String(a.starts_at).localeCompare(String(b.starts_at)));
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <p className="text-sm font-semibold uppercase tracking-widest text-[#4D746D]">NWACUHO · Vancouver, BC</p>
@@ -42,6 +44,21 @@ export default async function Conference2027() {
               <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{String(notice.body)}</p>
             </article>
           ))}
+        </section>
+      )}
+      {conference && visibleSessions.length > 0 && (
+        <section aria-label="Conference sessions" className="mt-10 space-y-4">
+          <div className="flex items-center justify-between gap-3"><h2 className="text-2xl font-semibold text-[#1F443E]">Conference program</h2><span className="text-sm text-slate-600">{visibleSessions.length} published sessions</span></div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {visibleSessions.map(session => (
+              <article key={String(session.id)} className="rounded-xl border border-slate-200 bg-white p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[#4D746D]">{String(session.session_type || "Session")}</p>
+                <h3 className="mt-1 text-lg font-semibold text-[#1F443E]">{String(session.title)}</h3>
+                {typeof session.starts_at === "string" && <time className="mt-2 block text-sm text-slate-600" dateTime={session.starts_at}>{new Date(session.starts_at).toLocaleString("en-CA",{dateStyle:"medium",timeStyle:"short",timeZone:"America/Vancouver"})} Vancouver time</time>}
+                {typeof session.description === "string" && session.description && <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{session.description}</p>}
+              </article>
+            ))}
+          </div>
         </section>
       )}
       <div className="mt-10 grid gap-6 md:grid-cols-3">
