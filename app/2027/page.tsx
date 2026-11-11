@@ -6,11 +6,11 @@ const sections = [
   { title: "Explore Vancouver", items: ["Travel Information & Tips", "Vancouver Local Guide", "Accessibility Guide", "Help Desk & FAQ"] },
   { title: "Connect & participate", items: ["Exhibitors", "Community Partners", "Networking Directory", "Volunteer Center", "Photo Gallery", "Conference Evaluations", "Engagement Challenges"] },
 ];
-async function readPublished(table: string, select = "*"): Promise<Row[]> {
+async function readPublished(table: string, select = "*", extraFilters = ""): Promise<Row[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return [];
-  const response = await fetch(`${url}/rest/v1/${table}?select=${encodeURIComponent(select)}&order=created_at.desc&limit=30`, {
+  const response = await fetch(`${url}/rest/v1/${table}?select=${encodeURIComponent(select)}&limit=200${extraFilters}`, {
     headers: { apikey: key },
     next: { revalidate: 60 },
   });
@@ -20,11 +20,12 @@ async function readPublished(table: string, select = "*"): Promise<Row[]> {
 export default async function Conference2027() {
   const [conferences, announcements, sessions] = await Promise.all([
     readPublished("conferences", "id,name,city,year,status"),
-    readPublished("announcements", "id,title,body,severity,published_at"),
-    readPublished("sessions", "id,title,description,starts_at,ends_at,session_type,status"),
+    readPublished("announcements", "id,conference_id,title,body,severity,published_at", "&status=eq.published&order=published_at.desc"),
+    readPublished("sessions", "id,conference_id,title,description,starts_at,ends_at,session_type,status", "&status=eq.published&visibility=eq.attendee&review_state=eq.ready&is_placeholder=eq.false&order=starts_at.asc"),
   ]);
   const conference = conferences.find((row) => row.year === 2027 && row.status === "published");
-  const visibleSessions = sessions.filter(row => row.status === "published" && typeof row.starts_at === "string").sort((a,b)=>String(a.starts_at).localeCompare(String(b.starts_at)));
+  const visibleAnnouncements = announcements.filter(row=>row.conference_id===conference?.id);
+  const visibleSessions = sessions.filter(row => row.conference_id===conference?.id && row.status === "published" && typeof row.starts_at === "string").sort((a,b)=>String(a.starts_at).localeCompare(String(b.starts_at)));
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <p className="text-sm font-semibold uppercase tracking-widest text-[#4D746D]">NWACUHO · Vancouver, BC</p>
@@ -35,10 +36,10 @@ export default async function Conference2027() {
           <strong className="text-[#1F443E]">Preview in progress.</strong> The Vancouver conference is not published yet. This page shows the planned sections without exposing draft records.
         </div>
       )}
-      {conference && announcements.length > 0 && (
+      {conference && visibleAnnouncements.length > 0 && (
         <section aria-label="Conference announcements" className="mt-8 space-y-3">
           <h2 className="text-2xl font-semibold text-[#1F443E]">Latest announcements</h2>
-          {announcements.map((notice) => (
+          {visibleAnnouncements.map((notice) => (
             <article key={String(notice.id)} className="rounded-xl border bg-white p-4">
               <h3 className="font-semibold">{String(notice.title)}</h3>
               <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{String(notice.body)}</p>
