@@ -1,7 +1,7 @@
 "use client";
 
 import {useEffect,useMemo,useState} from "react";
-import {CalendarDays,Search,Star,Clock3,SlidersHorizontal,MapPin} from "lucide-react";
+import {CalendarDays,Search,Star,Clock3,SlidersHorizontal} from "lucide-react";
 import {officialOutline,type ProgramDay,type ProgramItem} from "./officialOutline";
 
 const days:{id:ProgramDay;short:string;label:string}[]=[
@@ -26,7 +26,7 @@ export default function ScheduleExplorer({items=officialOutline,source="outline"
   return <section id="schedule" className="scroll-mt-20 space-y-5">
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#4D746D]">Explore the program</p><h2 className="mt-1 font-serif text-3xl font-semibold text-[#1F443E]">Find your next great conversation.</h2></div>
-      <div className="flex items-center gap-2 rounded-full bg-[#EDF3F0] px-3 py-1.5 text-xs font-semibold text-[#1F443E]"><CalendarDays size={14}/>{source==="outline"?"Official preliminary outline":"Published sessions"}</div>
+      <div className="flex items-center gap-2 rounded-full bg-[#EDF3F0] px-3 py-1.5 text-xs font-semibold text-[#1F443E]"><CalendarDays size={14}/>{source==="outline"?"Preliminary planning outline":"Published sessions"}</div>
     </div>
     <div className="rounded-2xl border border-[#D7E4E0] bg-white p-4 shadow-sm sm:p-6">
       <div role="tablist" aria-label="Conference day" className="grid grid-cols-3 gap-2 rounded-xl bg-[#F1F5F3] p-1.5">
@@ -52,7 +52,7 @@ export default function ScheduleExplorer({items=officialOutline,source="outline"
           <button title={saved.includes(item.id)?"Remove from saved":"Save to My Agenda"} aria-label={saved.includes(item.id)?`Remove ${item.title} from saved`:`Save ${item.title}`} aria-pressed={saved.includes(item.id)} onClick={()=>toggle(item.id)} className="h-9 w-9 shrink-0 rounded-full border border-[#D5DFDC] text-[#4D746D] hover:bg-[#EDF3F0]"><Star size={17} className="mx-auto" fill={saved.includes(item.id)?"#4D746D":"none"}/></button>
         </article>)}
       </div>
-      <p className="mt-4 text-xs leading-relaxed text-slate-500">All times are Vancouver local time (Pacific). {source==="outline"?"This is the preliminary schedule published by NWACUHO and may change. Individual presentation titles, room assignments, and speakers are not yet confirmed.":"Only approved, published attendee sessions are shown."} Saved items are stored on this device, not synchronized across devices.</p>
+      <p className="mt-4 text-xs leading-relaxed text-slate-500">All times are Vancouver local time (Pacific). {source==="outline"?"This is a working planning outline. Times and activities are subject to confirmation against the official NWACUHO website. Individual presentation titles, rooms, and speakers are not yet confirmed.":"Only approved, published attendee sessions are shown."} Saved items are stored on this device, not synchronized across devices.</p>
     </div>
   </section>;
 }
