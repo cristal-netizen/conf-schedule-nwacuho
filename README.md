@@ -11,6 +11,7 @@ The 2027 Vancouver attendee preview is available at `/2027`; the committee works
 ### Implemented
 
 - 2027 mobile-responsive attendee homepage with Vancouver-inspired styling and direct links to official registration/hotel information.
+- **2027 Community & Networking:** signed-in discussion boards with introductions, meetups, travel/ride sharing, general discussions, and Q&A; threaded replies; report controls; moderator hiding; attendee directory requiring explicit opt-in. Email addresses are not shown publicly.
 - Three-day schedule explorer with day tabs, text search, category filtering, device-only guest agenda, and **Supabase-backed attendee accounts** with authenticated agenda syncing across devices.
 - Preliminary public outline displayed while the 2027 conference remains unpublished. Only authorized and explicitly published records should enter the live schedule.
 - Supabase-backed committee login and role-controlled session, room, track, announcement and guide editing.
@@ -34,12 +35,13 @@ The 2027 Vancouver attendee preview is available at `/2027`; the committee works
 1. Test the new logo on mobile and desktop, including actual image loading and correct aspect ratio. Add approved white/black association wordmarks to the shared header, and consider a simplified app icon.
 2. Reconcile the working program outline with the official public conference schedule and the committee's alternate Tuesday proposal. Do not present tentative timings as confirmed.
 3. Populate accepted educational sessions, speaker bios, room assignments, tracks and detailed descriptions. Check room/time collisions.
-4. Build conference navigation, accessible venue map and local area guide after details are verified by LAC.
-5. Test sign-in, draft editing, review workflow, RLS, and public visibility with authorized and anonymous accounts.
-6. Audit dependencies and remediate build-reported vulnerabilities before production release; Vercel reported 16 vulnerabilities (1 low, 3 moderate, 11 high, 1 critical) during previous builds.
-7. Enable Supabase Auth leaked-password protection if available; latest security advisory flagged it as disabled.
-8. **iPhone launch gate:** manually test sign-up/email confirmation, login, saved agenda across app relaunches, Safari-to-Home-Screen handoff, airplane mode edits, reconnect, refresh-token expiry, second-device login, browser storage clearing and backup recovery. Cloud status must truthfully reflect server acknowledgement. The new flow has passed build checks, but this real-device testing is not yet complete.
-9. Add automated browser E2E and accessibility tests, then plan a separately approved production rollout.
+4. Validate Community moderation and participation policies end-to-end: opt-in privacy, posting and replies, reporting, moderator hiding, anti-spam limits, abuse response and retention. Launch should include community guidelines and a staffed reporting process.
+5. Build conference navigation, accessible venue map and local area guide after details are verified by LAC.
+6. Test sign-in, draft editing, review workflow, RLS, and public visibility with authorized and anonymous accounts.
+7. Audit dependencies and remediate build-reported vulnerabilities before production release; Vercel reported 16 vulnerabilities (1 low, 3 moderate, 11 high, 1 critical) during previous builds.
+8. Enable Supabase Auth leaked-password protection if available; latest security advisory flagged it as disabled.
+9. **iPhone launch gate:** manually test sign-up/email confirmation, login, saved agenda across app relaunches, Safari-to-Home-Screen handoff, airplane mode edits, reconnect, refresh-token expiry, second-device login, browser storage clearing and backup recovery. Cloud status must truthfully reflect server acknowledgement. The new flow has passed build checks, but this real-device testing is not yet complete.
+10. Add automated browser E2E and accessibility tests, then plan a separately approved production rollout.
 
 ## Project structure
 
@@ -47,6 +49,8 @@ The 2027 Vancouver attendee preview is available at `/2027`; the committee works
 - `app/2027/ScheduleExplorer.tsx` - interactive client-side agenda.
 - `app/2027/officialOutline.ts` - **preliminary planning outline**, not a final approved program.
 - `app/2027/useAgendaSync.ts` - attendee auth, local/remote agenda reconciliation, offline queue and sync state.
+- `app/2027/community/page.tsx` - private community boards, networking directory, and basic moderation tools.
+- `public.community_profiles`, `public.community_posts`, `public.community_reports` - community data protected by authenticated row-level security, including opt-in directory visibility.
 - `app/admin/page.tsx` - committee login and management workspace.
 - `app/admin/SessionManager.tsx` - session editing, draft approval fields, filters and program block tools.
 - `public/branding/` - conference brand artwork.
@@ -67,5 +71,6 @@ The Preview environment requires `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUP
 - November 2026: provisioned 2027 administrator access and verified sign-in.
 - November 2026: imported and secured the 2027 primary schedule; separated internal activities and placeholders; added review controls and individual-presentation drafting.
 - November 2026: introduced the 2027 Vancouver attendee homepage, preliminary agenda explorer and official conference badge.
+- November 2026: built attendee boards and opt-in networking; initial moderation and reporting included. Community end-to-end tests pending.
 - November 2026: addressed 2026 iPhone agenda-loss reports with account-backed persistence and offline queue. Guest saves remain local; account sync requires successful server acknowledgement. Real-device regression testing is pending.
 - **Release policy:** all changes stay in Preview pending committee validation and explicit approval for production.
