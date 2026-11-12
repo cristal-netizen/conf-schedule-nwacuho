@@ -11,12 +11,13 @@ The 2027 Vancouver attendee preview is available at `/2027`; the committee works
 ### Implemented
 
 - 2027 mobile-responsive attendee homepage with Vancouver-inspired styling and direct links to official registration/hotel information.
-- Three-day schedule explorer with day tabs, text search, category filtering, and device-local saved agenda (not account-synchronized).
+- Three-day schedule explorer with day tabs, text search, category filtering, device-only guest agenda, and **Supabase-backed attendee accounts** with authenticated agenda syncing across devices.
 - Preliminary public outline displayed while the 2027 conference remains unpublished. Only authorized and explicitly published records should enter the live schedule.
 - Supabase-backed committee login and role-controlled session, room, track, announcement and guide editing.
 - 63 schedule entries imported from the primary 2027 planning workbook as **drafts**, in Vancouver local time.
 - Schedule visibility and review fields: 42 attendee-facing entries, 21 internal entries, 7 educational placeholders, and all 63 flagged for review at initial import.
 - Ability to create distinct presentation drafts associated with educational program block placeholders.
+- Attendee agenda cloud persistence in `attendee_agenda_items` (private RLS by `auth.uid()`), email/password sign-in or sign-up, refreshed sessions, queueing offline changes, and retry on reconnect/reopen. Includes explicit cloud-sync status, guest-to-account import, and JSON export/restore backups.
 - Public row-level security that restricts published attendee sessions to approved, ready, non-placeholder, attendee-visible records within a published conference.
 - Official 2027 Vancouver conference badge added to `public/branding/nwacuho-2027-badge.svg` and placed in the attendee hero on the development branch; verify its appearance across browsers and viewport sizes.
 
@@ -37,13 +38,15 @@ The 2027 Vancouver attendee preview is available at `/2027`; the committee works
 5. Test sign-in, draft editing, review workflow, RLS, and public visibility with authorized and anonymous accounts.
 6. Audit dependencies and remediate build-reported vulnerabilities before production release; Vercel reported 16 vulnerabilities (1 low, 3 moderate, 11 high, 1 critical) during previous builds.
 7. Enable Supabase Auth leaked-password protection if available; latest security advisory flagged it as disabled.
-8. Add regression and accessibility tests, then plan a separately approved production rollout.
+8. **iPhone launch gate:** manually test sign-up/email confirmation, login, saved agenda across app relaunches, Safari-to-Home-Screen handoff, airplane mode edits, reconnect, refresh-token expiry, second-device login, browser storage clearing and backup recovery. Cloud status must truthfully reflect server acknowledgement. The new flow has passed build checks, but this real-device testing is not yet complete.
+9. Add automated browser E2E and accessibility tests, then plan a separately approved production rollout.
 
 ## Project structure
 
 - `app/2027/page.tsx` - 2027 attendee homepage and published-record fetching.
 - `app/2027/ScheduleExplorer.tsx` - interactive client-side agenda.
 - `app/2027/officialOutline.ts` - **preliminary planning outline**, not a final approved program.
+- `app/2027/useAgendaSync.ts` - attendee auth, local/remote agenda reconciliation, offline queue and sync state.
 - `app/admin/page.tsx` - committee login and management workspace.
 - `app/admin/SessionManager.tsx` - session editing, draft approval fields, filters and program block tools.
 - `public/branding/` - conference brand artwork.
@@ -64,4 +67,5 @@ The Preview environment requires `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUP
 - November 2026: provisioned 2027 administrator access and verified sign-in.
 - November 2026: imported and secured the 2027 primary schedule; separated internal activities and placeholders; added review controls and individual-presentation drafting.
 - November 2026: introduced the 2027 Vancouver attendee homepage, preliminary agenda explorer and official conference badge.
+- November 2026: addressed 2026 iPhone agenda-loss reports with account-backed persistence and offline queue. Guest saves remain local; account sync requires successful server acknowledgement. Real-device regression testing is pending.
 - **Release policy:** all changes stay in Preview pending committee validation and explicit approval for production.
