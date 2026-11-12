@@ -25,15 +25,25 @@ export default function VenuePage(){
     <article className="rounded-2xl border border-[#DAE4DE] bg-white p-6 shadow-sm">
      <div className="inline-flex rounded-xl bg-[#E8F2ED] p-3 text-[#1F443E]"><PanelsTopLeft size={25}/></div>
      <h2 className="mt-5 font-serif text-2xl font-semibold text-[#1F443E]">Venue floor plans</h2>
-     <p className="mt-3 text-sm leading-relaxed text-slate-600">Browse the Sheraton's official meeting-room floor plans, event spaces, and room-capacity chart. Floor plans are on the Marriott Events page.</p>
+     <p className="mt-3 text-sm leading-relaxed text-slate-600">The hotel's official floor plans and room-capacity chart are available on Marriott's Events page. Marriott blocks direct floor-plan image loading from our app.</p>
      <a href={hotelEvents} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1F443E] px-5 py-3 text-sm font-semibold text-white hover:bg-[#315B52]">Explore floor plans <ExternalLink size={16}/></a>
     </article>
     <article className="rounded-2xl border border-[#DAE4DE] bg-white p-6 shadow-sm">
      <div className="inline-flex rounded-xl bg-[#E8F2ED] p-3 text-[#1F443E]"><ScanEye size={25}/></div>
      <h2 className="mt-5 font-serif text-2xl font-semibold text-[#1F443E]">360° virtual tour</h2>
-     <p className="mt-3 text-sm leading-relaxed text-slate-600">Take a virtual walkthrough of the hotel and its meeting facilities using the 360-degree tour linked by Marriott.</p>
-     <a href={hotelVirtualTour} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1F443E] px-5 py-3 text-sm font-semibold text-white hover:bg-[#315B52]">Launch virtual tour <ExternalLink size={16}/></a>
+     <p className="mt-3 text-sm leading-relaxed text-slate-600">Explore the hotel and its meeting facilities right here in the conference app. The interactive tour is below.</p>
+     <a href="#virtual-tour" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1F443E] px-5 py-3 text-sm font-semibold text-white hover:bg-[#315B52]">Explore virtual tour <ArrowUpRight size={16}/></a>
     </article>
+   </section>
+   <section id="virtual-tour" aria-labelledby="virtual-tour-heading" className="scroll-mt-24 overflow-hidden rounded-2xl border border-[#DAE4DE] bg-white shadow-sm">
+     <div className="flex flex-wrap items-center justify-between gap-3 p-5 sm:p-6">
+       <div><p className="text-xs font-semibold uppercase tracking-wider text-[#4D746D]">Explore before you arrive</p><h2 id="virtual-tour-heading" className="mt-1 font-serif text-2xl font-semibold text-[#1F443E]">Interactive 360° hotel tour</h2><p className="mt-2 text-sm text-slate-600">Explore the spaces using the tour controls. If your browser blocks the embedded viewer, open it directly.</p></div>
+       <a href={hotelVirtualTour} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-[#D5DFDC] px-3 py-2.5 text-sm font-semibold text-[#1F443E]">Open full-screen tour <ExternalLink size={15}/></a>
+     </div>
+     <div className="bg-[#E6EEEA]" style={{height:"min(72vh,720px)",minHeight:420}}>
+       <iframe src={hotelVirtualTour} title="Sheraton Vancouver Wall Centre 360-degree hotel tour" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allow="fullscreen; accelerometer; gyroscope; xr-spatial-tracking" allowFullScreen className="h-full w-full border-0"/>
+     </div>
+     <p className="border-t border-[#DCE6E0] px-5 py-3 text-xs text-slate-600">Tour provided by the hotel through Visiting Media. Some mobile browsers may require opening it directly.</p>
    </section>
    <section className="rounded-2xl border border-[#DCE6E0] bg-[#E7EFEB] p-6 sm:p-8">
     <div className="flex items-start gap-3"><Building2 size={24} className="shrink-0 text-[#2D5A4B]"/><div><h2 className="text-xl font-semibold text-[#1F443E]">Hotel information</h2><p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#38564E]">Find the hotel overview, guest amenities and transportation information directly from Marriott. For any NWACUHO group rate or conference-specific booking instructions, use the official conference registration information rather than assuming Marriott's general rates apply.</p>
