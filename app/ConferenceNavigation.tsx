@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import {usePathname} from "next/navigation";
-import {CalendarDays,MessageSquare,Users,Settings} from "lucide-react";
+import {CalendarDays,MessageSquare,Users,Settings,MapPin} from "lucide-react";
 
 const legacy=[
  {href:"/2026",label:"2026 Schedule"},
@@ -14,6 +14,7 @@ const legacy=[
 ];
 const modern=[
  {href:"/2027",label:"2027 Home",Icon:CalendarDays},
+ {href:"/2027/venue",label:"Venue & Maps",Icon:MapPin},
  {href:"/2027/community",label:"Message Boards",Icon:MessageSquare},
  {href:"/2027/community/connect",label:"Networking",Icon:Users}
 ];
