@@ -52,7 +52,7 @@ export default async function Conference2027(){
           <a href={conferenceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/60 bg-white/10 px-5 py-3 font-semibold text-white transition hover:bg-white/20"><Ticket size={18}/> Registration details <ArrowUpRight size={16}/></a>
         </div>
         <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#E7F2EC]"><span className="flex items-center gap-2"><CalendarDays size={17}/> February 8–10, 2027</span><span className="flex items-center gap-2"><MapPin size={17}/> Sheraton Vancouver Wall Centre</span><span className="flex items-center gap-2"><Users size={17}/> Northwest housing community</span></div>
-      </div></div>
+      </div>
     </section>
     <div className="mx-auto max-w-6xl space-y-14 px-5 py-10 sm:space-y-20 sm:py-16">
       <section aria-label="Conference quick links" className="grid gap-3 md:grid-cols-3">
