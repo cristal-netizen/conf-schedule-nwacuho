@@ -5,7 +5,6 @@ import {officialOutline,type ProgramItem,type ProgramDay} from "./officialOutlin
 
 type Row = Record<string, unknown>;
 const conferenceUrl = "https://nwacuho.org/page/AnnualConference";
-const hotelUrl = "https://www.marriott.com/en-us/hotels/yvrws-sheraton-vancouver-wall-centre/overview/";
 async function fetchPublic(table:string,query:string):Promise<Row[]>{
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -58,7 +57,7 @@ export default async function Conference2027(){
     <div className="mx-auto max-w-6xl space-y-14 px-5 py-10 sm:space-y-20 sm:py-16">
       <section aria-label="Conference quick links" className="grid gap-3 md:grid-cols-3">
         <a href={conferenceUrl} target="_blank" rel="noopener noreferrer" className="group flex items-start gap-3 rounded-2xl border border-[#E0E8E1] bg-white p-5 shadow-sm hover:border-[#87ADA1]"><span className="rounded-xl bg-[#EDF3F0] p-3 text-[#1F443E]"><Ticket size={22}/></span><span className="flex-1"><strong className="block text-[#1F443E]">Register for conference</strong><span className="mt-1 block text-sm text-slate-600">Official registration and membership information</span></span><ArrowUpRight size={17} className="text-[#4D746D]"/></a>
-        <a href={hotelUrl} target="_blank" rel="noopener noreferrer" className="group flex items-start gap-3 rounded-2xl border border-[#E0E8E1] bg-white p-5 shadow-sm hover:border-[#87ADA1]"><span className="rounded-xl bg-[#EDF3F0] p-3 text-[#1F443E]"><MapPin size={22}/></span><span className="flex-1"><strong className="block text-[#1F443E]">Hotel & venue</strong><span className="mt-1 block text-sm text-slate-600">Hotel information, amenities & directions</span></span><ArrowUpRight size={17} className="text-[#4D746D]"/></a>
+        <Link href="/2027/venue" className="group flex items-start gap-3 rounded-2xl border border-[#E0E8E1] bg-white p-5 shadow-sm hover:border-[#87ADA1]"><span className="rounded-xl bg-[#EDF3F0] p-3 text-[#1F443E]"><MapPin size={22}/></span><span className="flex-1"><strong className="block text-[#1F443E]">Hotel & venue</strong><span className="mt-1 block text-sm text-slate-600">Hotel floor plans, virtual tour & amenities</span></span><ArrowUpRight size={17} className="text-[#4D746D]"/></Link>
         <a href="#schedule" className="group flex items-start gap-3 rounded-2xl border border-[#E0E8E1] bg-white p-5 shadow-sm hover:border-[#87ADA1]"><span className="rounded-xl bg-[#EDF3F0] p-3 text-[#1F443E]"><Star size={22}/></span><span className="flex-1"><strong className="block text-[#1F443E]">Build My Agenda</strong><span className="mt-1 block text-sm text-slate-600">Save an agenda with optional account sync</span></span><ArrowUpRight size={17} className="text-[#4D746D]"/></a>
       </section>
       {announcements.length>0&&<section className="rounded-2xl border border-[#BCD2C8] bg-[#EDF3F0] p-6"><h2 className="font-serif text-2xl text-[#1F443E]">Conference updates</h2><div className="mt-4 space-y-4">{announcements.map(item=><article key={String(item.id)}><h3 className="font-semibold text-[#1F443E]">{String(item.title)}</h3><p className="mt-1 whitespace-pre-line text-sm text-slate-700">{String(item.body)}</p></article>)}</div></section>}
