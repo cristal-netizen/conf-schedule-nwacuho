@@ -96,6 +96,7 @@ export function useAgendaSync(validIds:string[]){
   if(!original||inFlight.current)return;
   if(typeof navigator!=="undefined"&&!navigator.onLine){setStatus("offline");setMessage("Offline: changes are queued on this device and will sync after reconnecting.");return;}
   inFlight.current=true;
+  let completed=false;
   setStatus("syncing");
   const revision=authRevision.current;
   try{
@@ -120,6 +121,7 @@ export function useAgendaSync(validIds:string[]){
     if(add)remoteRef.current=[...new Set([...remoteRef.current,id])];
     else remoteRef.current=remoteRef.current.filter(x=>x!==id);
    }
+   completed=true;
    if(revision===authRevision.current){
     const remaining=readPending(current.user.id);
     setStatus(Object.keys(remaining).length?"offline":"synced");
@@ -130,7 +132,12 @@ export function useAgendaSync(validIds:string[]){
     setStatus("offline");
     setMessage((e instanceof Error?e.message:"Cloud sync unavailable.")+" Saved changes remain queued on this device. Retry when connected.");
    }
-  }finally{inFlight.current=false;}
+  }finally{
+   inFlight.current=false;
+   if(completed&&revision===authRevision.current&&activeRef.current){
+    try{if(Object.keys(readPending(activeRef.current.user.id)).length)window.setTimeout(()=>void syncRef.current(),0);}catch{}
+   }
+  }
  },[refresh,setSavedNow]);
  const syncRef=useRef(sync);
  useEffect(()=>{syncRef.current=sync;},[sync]);
