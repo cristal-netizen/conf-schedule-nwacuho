@@ -80,8 +80,8 @@ export default function ScheduleExplorer({items=officialOutline,source="outline"
       const value=JSON.parse(await file.text());
       if(value?.format!=="nwacuho-2027-agenda"||value?.version!==1||!Array.isArray(value.items))throw new Error("Not a valid 2027 agenda backup.");
       const valid=new Set(items.map(item=>item.id));
-      const requested=value.items.map((item:unknown)=>typeof item==="object"&&item!==null&&"id" in item?(item as {id:unknown}).id:null);
-      const ids=[...new Set(requested.filter((id:unknown):id is string=>typeof id==="string"&&valid.has(id)))];
+      const requested:(string|null)[]=value.items.map((item:unknown):string|null=>typeof item==="object"&&item!==null&&"id" in item&&typeof (item as {id:unknown}).id==="string"?(item as {id:string}).id:null);
+      const ids=[...new Set(requested.filter((id:string|null):id is string=>typeof id==="string"&&valid.has(id)))];
       const next=[...new Set([...readSaved(),...ids])];
       writeSaved(next);
       setSaved(next);
