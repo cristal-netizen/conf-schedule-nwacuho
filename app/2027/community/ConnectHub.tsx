@@ -128,8 +128,8 @@ export default function ConnectHub(){
  }
  const optInIds=useMemo(()=>new Set(profiles.map(p=>p.user_id)),[profiles]);
  const choices=useMemo(()=>preferences.filter(p=>p.user_id!==session?.user.id&&optInIds.has(p.user_id)&&
-    (section!=="mentorship"||p.connection_type!=="peer"||p.first_time_attendee)&&
-    (areaFilter==="all"||p.functional_areas?.includes(areaFilter))&&(!firstOnly||p.first_time_attendee)),[preferences,session,section,areaFilter,firstOnly,optInIds]);
+    (section!=="mentorship" || (connectionType==="mentee" ? ["mentor","both"].includes(p.connection_type) : connectionType==="mentor" ? ["mentee","both"].includes(p.connection_type) : (p.connection_type!=="peer"||p.first_time_attendee)))&&
+    (areaFilter==="all"||p.functional_areas?.includes(areaFilter))&&(!firstOnly||p.first_time_attendee)),[preferences,session,section,connectionType,areaFilter,firstOnly,optInIds]);
  function overlap(pref:Preference){return (pref.functional_areas||[]).filter(a=>areas.includes(a)).length;}
  const matches=[...choices].sort((a,b)=>overlap(b)-overlap(a));
  const profile=(id:string)=>profiles.find(p=>p.user_id===id);
@@ -150,7 +150,7 @@ export default function ConnectHub(){
        <button disabled={busy} className={button}>Save connection preferences</button>
       </form>
      </section>
-     <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="text-xl font-semibold text-[#1F443E]">{section==="mentorship"?"Mentors & new connections":"Colleagues in your field"}</h2><p className="text-sm text-slate-600">Explore opted-in profiles. Common functional areas are shown first. Connections are suggestions, not assigned mentor matches.</p>
+     <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="text-xl font-semibold text-[#1F443E]">{section==="mentorship"?"Mentors & new connections":"Colleagues in your field"}</h2><p className="text-sm text-slate-600">Explore opted-in profiles. Common functional areas are shown first. Connections are suggestions based on your selected goals and shared areas, not assigned mentor matches.</p>
       <div className="flex flex-wrap gap-3"><label className="text-xs">Functional area<select className={input} value={areaFilter} onChange={e=>setAreaFilter(e.target.value)}><option value="all">All areas</option>{AREA_OPTIONS.map(a=><option key={a}>{a}</option>)}</select></label><label className="flex items-center gap-2 self-end pb-2 text-xs"><input type="checkbox" checked={firstOnly} onChange={e=>setFirstOnly(e.target.checked)}/> First-time attendees only</label></div>
       {matches.map(p=>{const person=profile(p.user_id);return <article key={p.user_id} className="rounded-xl border border-[#D9E7E0] p-4"><div className="flex items-start gap-3"><UserRound className="mt-1 text-[#4D746D]" size={21}/><div><h3 className="font-semibold text-[#1F443E]">{person?.display_name||"Community member"}</h3><p className="text-xs text-slate-600">{[person?.role_title,person?.institution].filter(Boolean).join(" · ")}</p><div className="mt-2 flex flex-wrap gap-1.5">{p.first_time_attendee&&<span className="rounded-full bg-[#EDF3F0] px-2 py-1 text-xs">First-timer</span>}{p.connection_type!=="peer"&&<span className="rounded-full bg-[#EDF3F0] px-2 py-1 text-xs">{p.connection_type==="mentor"?"Offering mentorship":p.connection_type==="mentee"?"Seeking mentorship":"Open to mentoring"}</span>}{(p.functional_areas||[]).map(a=><span key={a} className="rounded-full bg-slate-100 px-2 py-1 text-xs">{a}</span>)}</div>{p.connection_goals&&<p className="mt-2 text-sm text-slate-700">{p.connection_goals}</p>}</div></div></article>})}
       {matches.length===0&&<p className="rounded-lg bg-[#F7F8F5] p-6 text-sm text-slate-600">No matching opted-in profiles yet. You can start a conversation on the Community message boards.</p>}
