@@ -8,9 +8,9 @@
 
 ## Integrated conference approach
 
-The release candidate includes both annual conference experiences in **one Next.js application**. The legacy 2026 Seattle schedule remains at `/`, retaining its existing schedule, speaker, information, venue, and accessibility routes. The 2027 Vancouver app stays under `/2027`, with `/2027/community` and `/2027/community/connect` for message boards and networking. Shared `app/ConferenceNavigation.tsx` provides an explicit year switcher and contextual navigation. Existing 2026 storage keys must not be reused by 2027; the 2027 guest agenda has its own versioned storage key.
+The release candidate includes both annual conference experiences in **one Next.js application**. The app root `/` redirects to `/2027`, making Vancouver 2027 the default experience. The 2026 Seattle schedule is preserved at `/2026`, while the existing legacy speaker, information, venue and accessibility routes remain available. The 2027 Vancouver app stays under `/2027`, with `/2027/community` and `/2027/community/connect` for message boards and networking. Shared `app/ConferenceNavigation.tsx` provides an explicit year switcher and contextual navigation. Existing 2026 storage keys must not be reused by 2027; the 2027 guest agenda has its own versioned storage key.
 
-The integrated approach **does not mean 2026 data is migrated to 2027**, nor that historical 2026 links or offline behavior are guaranteed until tested. The 2026 home and 2027 routes should both be exercised on the same hostname. Do not switch DNS or production aliases during testing.
+The integrated approach **does not mean 2026 data is migrated to 2027**, nor that historical 2026 links or offline behavior are guaranteed until tested. The 2026 archive and 2027 routes should both be exercised on the same hostname. Verify root `/` redirects to `/2027` and that `/2026` keeps the historical schedule. Do not switch DNS or production aliases during testing.
 
 
 ## Why live production is blocked
@@ -24,7 +24,7 @@ The integrated approach **does not mean 2026 data is migrated to 2027**, nor tha
 ## Testing plan
 
 ### 1. Conference routes and navigation
-- [ ] The shared year switcher sends 2026 attendees to `/` and 2027 attendees to `/2027` without overwriting either agenda.
+- [ ] The shared year switcher sends 2026 attendees to `/2026` and 2027 attendees to `/2027` without overwriting either agenda.
 - [ ] 2026 legacy schedule, speakers, info, venue, accessibility and existing favorites still behave correctly.
 - [ ] /2027 homepage works on desktop, iPhone Safari, and installed iPhone Home Screen app.
 - [ ] Branding, icons and contrast correct. Replace badge derivative with archived source artwork.
