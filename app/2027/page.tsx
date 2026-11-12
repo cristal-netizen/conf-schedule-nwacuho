@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {CalendarDays,MapPin,Ticket,Star,ArrowUpRight,ExternalLink,Compass,Users,Accessibility} from "lucide-react";
 import ScheduleExplorer from "./ScheduleExplorer";
 import {officialOutline,type ProgramItem,type ProgramDay} from "./officialOutline";
@@ -42,7 +43,7 @@ export default async function Conference2027(){
     <section className="relative isolate overflow-hidden bg-[#1F443E] text-white">
       <div className="absolute inset-0 -z-10" style={{background:"radial-gradient(ellipse at 85% 25%,#547D71 0%,transparent 48%),linear-gradient(110deg,#15382F,#1F443E 65%,#315B52)"}}/>
       <svg aria-hidden="true" className="pointer-events-none absolute bottom-0 right-0 -z-10 h-64 w-full opacity-25" viewBox="0 0 1200 300" preserveAspectRatio="none"><path d="M0 240L90 195L150 215L290 60L380 160L470 95L550 166L650 35L775 170L870 95L990 190L1100 110L1200 200V300H0Z" fill="#C7E2D8"/><path d="M0 280L135 235L240 265L360 175L470 245L610 160L715 240L820 185L1020 245L1200 210V300H0Z" fill="#86B8A8"/></svg>
-      <div className="mx-auto max-w-6xl px-5 pb-16 pt-12 sm:pb-24 sm:pt-20">
+      <div className="mx-auto grid max-w-6xl items-center gap-5 px-5 pb-14 pt-12 sm:pb-20 sm:pt-16 lg:grid-cols-[1fr_340px] lg:gap-6"> <div>
         <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[.16em]"><span className="h-2 w-2 rounded-full bg-[#C9E7D9]"/> NWACUHO 2027 Annual Conference</span>
         <h1 className="mt-8 max-w-4xl font-serif text-5xl font-semibold leading-[1.08] tracking-tight sm:text-7xl">Good things grow <em className="font-normal text-[#BDDED3]">together.</em></h1>
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[#E2EDE8]">Welcome to your Vancouver conference companion, a home for learning, community, and everything in between.</p>
@@ -51,7 +52,7 @@ export default async function Conference2027(){
           <a href={conferenceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/60 bg-white/10 px-5 py-3 font-semibold text-white transition hover:bg-white/20"><Ticket size={18}/> Registration details <ArrowUpRight size={16}/></a>
         </div>
         <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#E7F2EC]"><span className="flex items-center gap-2"><CalendarDays size={17}/> February 8–10, 2027</span><span className="flex items-center gap-2"><MapPin size={17}/> Sheraton Vancouver Wall Centre</span><span className="flex items-center gap-2"><Users size={17}/> Northwest housing community</span></div>
-      </div>
+      </div><div className="mx-auto flex w-full max-w-[300px] items-center justify-center lg:max-w-[340px]"><Image unoptimized priority src="/branding/nwacuho-2027-badge.svg" alt="NWACUHO 2027 Vancouver conference logo featuring the city skyline, mountains, and maple leaves" width={340} height={263} className="h-auto w-full drop-shadow-xl" /></div></div>
     </section>
     <div className="mx-auto max-w-6xl space-y-14 px-5 py-10 sm:space-y-20 sm:py-16">
       <section aria-label="Conference quick links" className="grid gap-3 md:grid-cols-3">
