@@ -1,5 +1,3 @@
-import ClientOnlySchedule from "./ClientOnly";
+import {redirect} from "next/navigation";
 
-export default function Page() {
-  return <ClientOnlySchedule />;
-}
+export default function Home(){redirect("/2027");}
