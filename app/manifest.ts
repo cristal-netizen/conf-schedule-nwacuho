@@ -2,29 +2,20 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "NWACUHO Conference Schedule",
-    short_name: "NWACUHO",
-    description: "NWACUHO Annual Conference schedule and personal agenda.",
-    start_url: "/",
+    name: "NWACUHO 2027 Conference Companion",
+    short_name: "NWACUHO 2027",
+    description: "Vancouver 2027 conference schedule, personalized agenda, community and networking.",
+    start_url: "/2027",
+    scope: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#28903b",
+    background_color: "#1F443E",
+    theme_color: "#1F443E",
     icons: [
       {
-        src: "/icons/icon-192.png",
-        sizes: "192x192",
-        type: "image/png",
-      },
-      {
-        src: "/icons/icon-512.png",
-        sizes: "512x512",
-        type: "image/png",
-      },
-      {
-        src: "/icons/icon-512.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "maskable",
+        src: "/branding/nwacuho-app-icon.svg",
+        sizes: "any",
+        type: "image/svg+xml",
+        purpose: "any",
       },
     ],
   };
