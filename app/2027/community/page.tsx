@@ -7,6 +7,7 @@ import {ArrowLeft,Users,MessageSquare,Flag,Send,ShieldCheck,RefreshCw,UserRound,
 const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
 const apiKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const AUTH_KEY="nwacuho-2027-attendee-auth-v1";
+const CONFERENCE_ID="657785cf-4ce8-405c-9a52-24268b9d37d7";
 type Auth={access_token:string;refresh_token:string;expires_at:number;user:{id:string;email:string}};
 type Profile={user_id:string;display_name:string;institution:string|null;role_title:string|null;interests:string|null;directory_opt_in:boolean};
 type Post={id:string;author_id:string;category:string;title:string;body:string;parent_id:string|null;status:string;created_at:string};
@@ -62,9 +63,7 @@ export default function CommunityPage(){
  },[request]);
  const load=useCallback(async(session:Auth)=>{
   const s=await ensureAuth(session);
-  const conferences=await request("/rest/v1/conferences?year=eq.2027&select=id&limit=1",s) as {id:string}[];
-  const id=conferences?.[0]?.id;
-  if(!id)throw new Error("2027 conference records are unavailable.");
+  const id=CONFERENCE_ID;
   setConferenceId(id);
   const [mine,allPosts,directory,memberships]=await Promise.all([
    request("/rest/v1/community_profiles?user_id=eq."+encodeURIComponent(s.user.id)+"&select=user_id,display_name,institution,role_title,interests,directory_opt_in&limit=1",s),
