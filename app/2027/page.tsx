@@ -1,5 +1,6 @@
 import Image from "next/image";
-import {CalendarDays,MapPin,Ticket,Star,ArrowUpRight,ExternalLink,Compass,Users,Accessibility} from "lucide-react";
+import {CalendarDays,MapPin,Ticket,Star,ArrowUpRight,ExternalLink,Compass,Users,Accessibility,MessageSquare} from "lucide-react";
+import Link from "next/link";
 import ScheduleExplorer from "./ScheduleExplorer";
 import {officialOutline,type ProgramItem,type ProgramDay} from "./officialOutline";
 
@@ -61,10 +62,14 @@ export default async function Conference2027(){
         <a href="#schedule" className="group flex items-start gap-3 rounded-2xl border border-[#E0E8E1] bg-white p-5 shadow-sm hover:border-[#87ADA1]"><span className="rounded-xl bg-[#EDF3F0] p-3 text-[#1F443E]"><Star size={22}/></span><span className="flex-1"><strong className="block text-[#1F443E]">Build My Agenda</strong><span className="mt-1 block text-sm text-slate-600">Save activities privately on this device</span></span><ArrowUpRight size={17} className="text-[#4D746D]"/></a>
       </section>
       {announcements.length>0&&<section className="rounded-2xl border border-[#BCD2C8] bg-[#EDF3F0] p-6"><h2 className="font-serif text-2xl text-[#1F443E]">Conference updates</h2><div className="mt-4 space-y-4">{announcements.map(item=><article key={String(item.id)}><h3 className="font-semibold text-[#1F443E]">{String(item.title)}</h3><p className="mt-1 whitespace-pre-line text-sm text-slate-700">{String(item.body)}</p></article>)}</div></section>}
-      <ScheduleExplorer items={showPublished?published:officialOutline} source={showPublished?"live":"outline"}/>
+      <section aria-label="Community and networking" className="grid gap-4 rounded-3xl border border-[#D3E2DB] bg-white p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8">
+  <div><p className="text-xs font-bold uppercase tracking-widest text-[#4D746D]">Meet your people</p><h2 className="mt-2 font-serif text-3xl font-semibold text-[#1F443E]">Conversations beyond the sessions.</h2><p className="mt-2 max-w-2xl text-sm text-slate-600">Join message boards, arrange informal meetups, ask colleagues questions, and build your network. Create a profile and choose whether to appear in the attendee directory.</p></div>
+  <Link href="/2027/community" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1F443E] px-5 py-3 text-sm font-semibold text-white"><MessageSquare size={17}/> Explore community <ArrowUpRight size={16}/></Link>
+</section>
+<ScheduleExplorer items={showPublished?published:officialOutline} source={showPublished?"live":"outline"}/>
       <section className="grid gap-7 rounded-3xl bg-[#E6EEEA] p-6 sm:grid-cols-2 sm:p-10">
         <div><p className="text-xs font-bold uppercase tracking-widest text-[#4D746D]">Beyond the sessions</p><h2 className="mt-2 font-serif text-3xl font-semibold text-[#1F443E]">Make Vancouver yours.</h2><p className="mt-4 text-sm leading-relaxed text-[#38564E]">Explore the venue, local neighborhoods, and travel resources. More recommendations will be added as the Local Arrangements Committee confirms them.</p><a href={conferenceUrl} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 font-semibold text-[#1F443E] underline underline-offset-4">Official conference information <ExternalLink size={15}/></a></div>
-        <div className="grid grid-cols-2 gap-3">{[{title:"Venue",subtitle:"Hotel & meeting spaces",Icon:MapPin},{title:"Explore",subtitle:"Vancouver city guide",Icon:Compass},{title:"Community",subtitle:"Events & connections",Icon:Users},{title:"Access",subtitle:"Attendee accessibility",Icon:Accessibility}].map(item=><div key={item.title} className="rounded-xl border border-[#D1DED6] bg-white/80 p-4"><item.Icon size={22} className="text-[#4D746D]"/><h3 className="mt-3 font-semibold text-[#1F443E]">{item.title}</h3><p className="mt-1 text-xs text-slate-600">{item.subtitle}</p></div>)}</div>
+        <div className="grid grid-cols-2 gap-3">{[{title:"Venue",subtitle:"Hotel & meeting spaces",Icon:MapPin},{title:"Explore",subtitle:"Vancouver city guide",Icon:Compass},{title:"Community",subtitle:"Boards & opt-in directory",Icon:Users},{title:"Access",subtitle:"Attendee accessibility",Icon:Accessibility}].map(item=><div key={item.title} className="rounded-xl border border-[#D1DED6] bg-white/80 p-4"><item.Icon size={22} className="text-[#4D746D]"/><h3 className="mt-3 font-semibold text-[#1F443E]">{item.title}</h3><p className="mt-1 text-xs text-slate-600">{item.subtitle}</p></div>)}</div>
       </section>
       <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-[#DCE6E0] pt-7 text-sm text-slate-600"><p>NWACUHO Conference Companion · 2027 Vancouver</p><a href={conferenceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-[#1F443E]">NWACUHO official website <ArrowUpRight size={15}/></a></footer>
     </div>
