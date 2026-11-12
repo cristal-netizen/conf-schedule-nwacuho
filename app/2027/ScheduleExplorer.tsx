@@ -1,7 +1,8 @@
 "use client";
 
 import {useEffect,useMemo,useState} from "react";
-import {CalendarDays,Search,Star,Clock3,SlidersHorizontal,Download,Upload,AlertTriangle,CheckCircle2} from "lucide-react";
+import {CalendarDays,Search,Star,Clock3,SlidersHorizontal,Download,Upload,AlertTriangle,CheckCircle2,Cloud,CloudOff,LogIn,LogOut,RefreshCw} from "lucide-react";
+import {useAgendaSync} from "./useAgendaSync";
 import {officialOutline,type ProgramDay,type ProgramItem} from "./officialOutline";
 
 const days:{id:ProgramDay;short:string;label:string}[]=[
@@ -11,83 +12,46 @@ const days:{id:ProgramDay;short:string;label:string}[]=[
 ];
 const filters=[["all","All activities"],["program","Education"],["networking","Networking"],["exhibitors","Exhibitors"],["general","General"],["meal","Meals"]] as const;
 function time(value:string){const [h,m]=value.split(":").map(Number);return `${(h+11)%12+1}:${String(m).padStart(2,"0")} ${h>=12?"PM":"AM"}`;}
-const STORAGE_KEY="nwacuho-2027-saved-v1";
-function readSaved():string[] {
-  const value=JSON.parse(window.localStorage.getItem(STORAGE_KEY)||"[]");
-  if(!Array.isArray(value))throw new Error("Saved agenda has an unexpected format.");
-  return [...new Set(value.filter((id):id is string=>typeof id==="string"))];
-}
-function writeSaved(items:string[]) {
-  window.localStorage.setItem(STORAGE_KEY,JSON.stringify(items));
-  if(window.localStorage.getItem(STORAGE_KEY)!==JSON.stringify(items))throw new Error("Storage did not confirm the change.");
-}
 const categoryName:Record<ProgramItem["category"],string>={program:"Education",networking:"Networking",exhibitors:"Exhibitors",general:"General",meal:"Meals"};
 
 export default function ScheduleExplorer({items=officialOutline,source="outline"}:{items?:ProgramItem[];source?:"outline"|"live"}) {
   const [day,setDay]=useState<ProgramDay>("2027-02-08");
   const [category,setCategory]=useState("all");
   const [query,setQuery]=useState("");
-  const [saved,setSaved]=useState<string[]>([]);
-  const [loaded,setLoaded]=useState(false);
-  const [saveStatus,setSaveStatus]=useState<"loading"|"ready"|"error">("loading");
-  const [message,setMessage]=useState("");
-  useEffect(()=>{
-    function reload(){
-      try{setSaved(readSaved());setSaveStatus("ready");setMessage("");}
-      catch{setSaveStatus("error");setMessage("This browser cannot access your saved agenda. Changes will not be saved until storage is available. You can still browse the program.");}
-      setLoaded(true);
-    }
-    reload();
-    const onStorage=(event:StorageEvent)=>{if(event.key===STORAGE_KEY||event.key===null)reload();};
-    window.addEventListener("storage",onStorage);
-    window.addEventListener("pageshow",reload);
-    return ()=>{window.removeEventListener("storage",onStorage);window.removeEventListener("pageshow",reload);};
-  },[]);
-  function toggle(id:string){
-    if(!loaded){setMessage("Your agenda is still loading. Please try again.");return;}
-    try{
-      const current=readSaved();
-      const next=current.includes(id)?current.filter(value=>value!==id):[...current,id];
-      writeSaved(next);
-      setSaved(next);
-      setSaveStatus("ready");
-      setMessage(next.includes(id)?"Saved to My Agenda on this device.":"Removed from My Agenda.");
-    }catch{
-      setSaveStatus("error");
-      setMessage("Unable to save on this device. Your selection was not changed. Check Safari settings or use Export Agenda if you already have saved activities.");
-    }
+  const agenda=useAgendaSync(items.map(item=>item.id));
+  const {saved,loaded,session,status,message,setMessage,authBusy,toggle,signIn,signUp,signOut,importItems,mergeGuest,retry}=agenda;
+  const [email,setEmail]=useState("");
+  const [password,setPassword]=useState("");
+  const [authMode,setAuthMode]=useState<"sign-in"|"sign-up">("sign-in");
+  const [showAccount,setShowAccount]=useState(false);
+  async function submitAuth(e:React.FormEvent){
+    e.preventDefault();
+    const ok=authMode==="sign-in"?await signIn(email,password):await signUp(email,password);
+    setPassword("");
+    if(ok)setShowAccount(false);
   }
   function exportAgenda(){
     if(!loaded)return;
     const chosen=items.filter(item=>saved.includes(item.id)).map(({id,day,start,end,title,category})=>({id,day,start,end,title,category}));
     const payload=JSON.stringify({format:"nwacuho-2027-agenda",version:1,exportedAt:new Date().toISOString(),items:chosen},null,2);
     const blob=new Blob([payload],{type:"application/json"});
-    const url=URL.createObjectURL(blob);
     const link=document.createElement("a");
-    link.href=url;
-    link.download="nwacuho-2027-my-agenda.json";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(()=>URL.revokeObjectURL(url),1000);
-    setMessage("Agenda backup downloaded. Keep this file if you change devices or clear browser data.");
+    const objectUrl=URL.createObjectURL(blob);
+    link.href=objectUrl;link.download="nwacuho-2027-my-agenda.json";
+    document.body.appendChild(link);link.click();link.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
+    setMessage("Agenda backup downloaded. Keep it as an additional recovery option.");
   }
   async function importAgenda(event:React.ChangeEvent<HTMLInputElement>){
     const file=event.target.files?.[0];
     if(!file)return;
     try{
-      if(file.size>100000)throw new Error("File is too large.");
+      if(file.size>100000)throw new Error("Backup too large.");
       const value=JSON.parse(await file.text());
-      if(value?.format!=="nwacuho-2027-agenda"||value?.version!==1||!Array.isArray(value.items))throw new Error("Not a valid 2027 agenda backup.");
-      const valid=new Set(items.map(item=>item.id));
-      const requested:(string|null)[]=value.items.map((item:unknown):string|null=>typeof item==="object"&&item!==null&&"id" in item&&typeof (item as {id:unknown}).id==="string"?(item as {id:string}).id:null);
-      const ids=[...new Set(requested.filter((id:string|null):id is string=>typeof id==="string"&&valid.has(id)))];
-      const next=[...new Set([...readSaved(),...ids])];
-      writeSaved(next);
-      setSaved(next);
-      setSaveStatus("ready");
-      setMessage(`Restored ${ids.length} matching activities to My Agenda on this device. Existing saved items were kept.`);
-    }catch{setSaveStatus("error");setMessage("Could not restore the backup. Check that it is a NWACUHO 2027 agenda export and storage is enabled.");}
+      if(value?.format!=="nwacuho-2027-agenda"||value?.version!==1||!Array.isArray(value.items))throw new Error("Not an NWACUHO agenda backup.");
+      const ids:string[]=value.items.map((item:unknown)=>typeof item==="object"&&item!==null&&"id" in item?(item as {id:string}).id:null).filter((id:unknown):id is string=>typeof id==="string");
+      importItems(ids);
+    }catch{setMessage("Unable to restore this backup. Check the file and try again.");}
     finally{event.target.value="";}
   }
   const [onlySaved,setOnlySaved]=useState(false);
@@ -109,9 +73,26 @@ export default function ScheduleExplorer({items=officialOutline,source="outline"
         <p className="text-sm font-semibold text-[#1F443E]">{days.find(d=>d.id===day)?.label} <span className="ml-1 font-normal text-slate-500">· {visible.length} activities</span></p>
         <button type="button" aria-pressed={onlySaved} onClick={()=>setOnlySaved(!onlySaved)} className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${onlySaved?"border-[#1F443E] bg-[#E7F0EC] text-[#1F443E]":"border-[#D5DFDC] text-slate-600"}`}><Star size={14} fill={onlySaved?"currentColor":"none"}/> My saved ({loaded?saved.length:0})</button>
       </div>
-      <div aria-live="polite" role="status" className={`mt-3 flex items-start gap-2 rounded-lg px-3 py-2 text-xs ${saveStatus==="error"?"bg-amber-50 text-amber-900":"bg-[#F1F7F3] text-[#31564A]"}`}>
-        {saveStatus==="error"?<AlertTriangle size={16} className="shrink-0"/>:<CheckCircle2 size={16} className="shrink-0"/>}
-        <span>{message||(loaded?"Agenda storage is available on this device. Your saved selections remain here unless its browser data is cleared.":"Checking browser storage…")}</span>
+      <div className="mt-4 rounded-xl border border-[#D1DED6] bg-[#F8FBF9] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-start gap-2">
+            {status==="synced"?<Cloud size={20} className="mt-0.5 text-[#2F7156]"/>:status==="offline"||status==="error"?<CloudOff size={20} className="mt-0.5 text-amber-700"/>:<Cloud size={20} className="mt-0.5 text-[#4D746D]"/>}
+            <div><p className="text-sm font-semibold text-[#1F443E]">{session?`Signed in: ${session.user.email}`:"Guest agenda"}</p>
+            <p className="mt-0.5 text-xs text-slate-600">{status==="synced"?"Saved to your account":status==="syncing"?"Syncing to your account…":status==="offline"?"Not yet synced. Changes remain queued on this device.":status==="error"?"Saving needs attention":session?"Account connection ready":"Saved on this device only"}</p></div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {session?<><button type="button" onClick={()=>void retry()} className="inline-flex items-center gap-1.5 rounded-lg border border-[#C9D9D1] px-3 py-2 text-xs font-semibold text-[#1F443E]"><RefreshCw size={14}/> Retry sync</button><button type="button" onClick={signOut} className="inline-flex items-center gap-1.5 rounded-lg border border-[#C9D9D1] px-3 py-2 text-xs font-semibold text-[#1F443E]"><LogOut size={14}/> Sign out</button></>:<button type="button" onClick={()=>setShowAccount(!showAccount)} className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F443E] px-3 py-2 text-xs font-semibold text-white"><LogIn size={14}/> {showAccount?"Hide sign-in":"Sign in / Create account"}</button>}
+          </div>
+        </div>
+        {message&&<p role="status" aria-live="polite" className={`mt-3 rounded-lg p-2 text-xs ${status==="error"||status==="offline"?"bg-amber-50 text-amber-900":"bg-[#E8F2ED] text-[#284E41]"}`}>{message}</p>}
+        {session&&<button type="button" onClick={mergeGuest} className="mt-2 text-xs font-semibold text-[#1F443E] underline underline-offset-2">Import selections previously saved as a guest on this device</button>}
+        {!session&&showAccount&&<form onSubmit={submitAuth} className="mt-4 grid gap-3 border-t border-[#D1DED6] pt-4 sm:grid-cols-2">
+          <p className="sm:col-span-2 text-sm font-semibold text-[#1F443E]">{authMode==="sign-in"?"Sign in to your saved agenda":"Create an attendee account"}</p>
+          <label className="text-xs font-medium text-slate-700">Email<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} className="mt-1 w-full rounded-lg border border-[#C9D9D1] bg-white px-3 py-2 text-base"/></label>
+          <label className="text-xs font-medium text-slate-700">Password<input required minLength={6} type="password" autoComplete={authMode==="sign-in"?"current-password":"new-password"} value={password} onChange={e=>setPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-[#C9D9D1] bg-white px-3 py-2 text-base"/></label>
+          <div className="flex flex-wrap items-center gap-3 sm:col-span-2"><button disabled={authBusy} className="rounded-lg bg-[#1F443E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{authBusy?"Connecting…":authMode==="sign-in"?"Sign in":"Create account"}</button><button type="button" onClick={()=>setAuthMode(authMode==="sign-in"?"sign-up":"sign-in")} className="text-xs font-semibold text-[#1F443E] underline">{authMode==="sign-in"?"Need an account? Sign up":"Already registered? Sign in"}</button></div>
+          <p className="text-xs leading-relaxed text-slate-600 sm:col-span-2">Accounts sync your approved conference sessions across browsers and devices once online. Email confirmation may be required. Guests can still browse and save locally.</p>
+        </form>}
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button type="button" onClick={exportAgenda} disabled={!loaded||saved.length===0} className="inline-flex items-center gap-2 rounded-lg border border-[#D5DFDC] px-3 py-2 text-xs font-semibold text-[#1F443E] disabled:opacity-50"><Download size={15}/> Export agenda backup</button>
@@ -129,7 +110,7 @@ export default function ScheduleExplorer({items=officialOutline,source="outline"
           <button title={saved.includes(item.id)?"Remove from saved":"Save to My Agenda"} aria-label={saved.includes(item.id)?`Remove ${item.title} from saved`:`Save ${item.title}`} aria-pressed={saved.includes(item.id)} disabled={!loaded} onClick={()=>toggle(item.id)} className="h-9 w-9 shrink-0 rounded-full border border-[#D5DFDC] text-[#4D746D] hover:bg-[#EDF3F0]"><Star size={17} className="mx-auto" fill={saved.includes(item.id)?"#4D746D":"none"}/></button>
         </article>)}
       </div>
-      <p className="mt-4 text-xs leading-relaxed text-slate-500">All times are Vancouver local time (Pacific). {source==="outline"?"This is a working planning outline. Times and activities are subject to confirmation against the official NWACUHO website. Individual presentation titles, rooms, and speakers are not yet confirmed.":"Only approved, published attendee sessions are shown."} Saved items are stored in this browser, not synchronized across devices or Safari home-screen installations. Export a backup before switching devices or clearing website data.</p>
+      <p className="mt-4 text-xs leading-relaxed text-slate-500">All times are Vancouver local time (Pacific). {source==="outline"?"This is a working planning outline. Times and activities are subject to confirmation against the official NWACUHO website. Individual presentation titles, rooms, and speakers are not yet confirmed.":"Only approved, published attendee sessions are shown."} Guest selections stay in this browser only. Sign in to sync across devices. Offline account changes remain queued locally until you reconnect and sync; export a backup for additional protection.</p>
     </div>
   </section>;
 }
