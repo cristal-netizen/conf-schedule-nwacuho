@@ -6,6 +6,13 @@
 **Environment:** Vercel isolated Preview candidate; production-optimized Next.js build, **NOT** live domain promotion.
 **Existing public domain:** `nwacuho.app` remains assigned to the 2026 production app pending approval.
 
+## Integrated conference approach
+
+The release candidate includes both annual conference experiences in **one Next.js application**. The legacy 2026 Seattle schedule remains at `/`, retaining its existing schedule, speaker, information, venue, and accessibility routes. The 2027 Vancouver app stays under `/2027`, with `/2027/community` and `/2027/community/connect` for message boards and networking. Shared `app/ConferenceNavigation.tsx` provides an explicit year switcher and contextual navigation. Existing 2026 storage keys must not be reused by 2027; the 2027 guest agenda has its own versioned storage key.
+
+The integrated approach **does not mean 2026 data is migrated to 2027**, nor that historical 2026 links or offline behavior are guaranteed until tested. The 2026 home and 2027 routes should both be exercised on the same hostname. Do not switch DNS or production aliases during testing.
+
+
 ## Why live production is blocked
 
 - The Vercel project environment includes `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` only for **Preview**. They do not currently target Production. Promoting 2027 to production with this configuration would disable database-dependent functionality.
@@ -17,6 +24,8 @@
 ## Testing plan
 
 ### 1. Conference routes and navigation
+- [ ] The shared year switcher sends 2026 attendees to `/` and 2027 attendees to `/2027` without overwriting either agenda.
+- [ ] 2026 legacy schedule, speakers, info, venue, accessibility and existing favorites still behave correctly.
 - [ ] /2027 homepage works on desktop, iPhone Safari, and installed iPhone Home Screen app.
 - [ ] Branding, icons and contrast correct. Replace badge derivative with archived source artwork.
 - [ ] Schedule day tabs, filters, search, event labels and Vancouver time display correct.
