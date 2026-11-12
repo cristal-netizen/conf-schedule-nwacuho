@@ -8,10 +8,10 @@ const notoSans = Noto_Sans({ variable: "--font-noto-sans", subsets: ["latin"], d
 const notoSerif = Noto_Serif({ variable: "--font-noto-serif", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "NWACUHO Conference",
+  title: "NWACUHO 2027 Conference Companion",
   description: "NWACUHO conference schedule and attendee information.",
-  applicationName: "NWACUHO Conference",
-  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
+  applicationName: "NWACUHO 2027",
+  icons: { icon: [{ url: "/branding/nwacuho-app-icon.svg", type: "image/svg+xml", sizes: "any" }], apple: "/branding/nwacuho-app-icon.svg" },
 };
 export const viewport: Viewport = { themeColor: "#1F443E" };
 
