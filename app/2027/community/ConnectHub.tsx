@@ -101,9 +101,9 @@ export default function ConnectHub(){
   e.preventDefault();if(!session||!own)return;
   setBusy(true);setNotice("");
   try{
-   if(!starts||Number.isNaN(new Date(starts).getTime()))throw new Error("Choose a valid date and time.");
+   if(!starts||Number.isNaN(new Date(starts+":00-08:00").getTime()))throw new Error("Choose a valid date and time.");
    const s=await ensureSession(session);
-   await request("community_meetups",s,{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({conference_id:conferenceId,organizer_id:s.user.id,title:name.trim(),details:details.trim(),location:location.trim(),starts_at:new Date(starts).toISOString(),status:"active"})});
+   await request("community_meetups",s,{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({conference_id:conferenceId,organizer_id:s.user.id,title:name.trim(),details:details.trim(),location:location.trim(),starts_at:new Date(starts+":00-08:00").toISOString(),status:"active"})});
    setName("");setDetails("");setLocation("");setStarts("");await load(s);setNotice("Meetup created. Signed-in attendees can see the location and time.");
   }catch(e){setNotice(e instanceof Error?e.message:"Could not create meetup.");}
   finally{setBusy(false);}
