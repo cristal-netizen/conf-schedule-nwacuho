@@ -7,6 +7,7 @@ import {ArrowLeft,Users,MessageSquare,Flag,Send,ShieldCheck,RefreshCw,UserRound,
 const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
 const apiKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const AUTH_KEY="nwacuho-2027-attendee-auth-v1";
+const CONFIRM_URL="https://nwacuho.app/2027/auth/confirmed";
 const CONFERENCE_ID="657785cf-4ce8-405c-9a52-24268b9d37d7";
 type Auth={access_token:string;refresh_token:string;expires_at:number;user:{id:string;email:string}};
 type Profile={user_id:string;display_name:string;institution:string|null;role_title:string|null;interests:string|null;directory_opt_in:boolean};
@@ -95,7 +96,7 @@ export default function CommunityPage(){
  async function submitAuth(e:FormEvent){
   e.preventDefault();setBusy(true);setMessage("");
   try{
-   const path=mode==="signin"?"token?grant_type=password":"signup";
+   const path=mode==="signin"?"token?grant_type=password":"signup?redirect_to="+encodeURIComponent(CONFIRM_URL);
    const data=await request("/auth/v1/"+path,null,{method:"POST",body:JSON.stringify({email:email.trim(),password})});
    const session=parseAuth({...data,expires_at:Math.floor(Date.now()/1000)+Number(data.expires_in||3600)});
    setPassword("");
@@ -104,6 +105,13 @@ export default function CommunityPage(){
     setMessage("Signed in to the NWACUHO community.");
    }else setMessage("Check your email for confirmation, then sign in.");
   }catch(e){setMessage(e instanceof Error?e.message:"Sign-in failed.");}
+  finally{setBusy(false);}
+ }
+ async function resendConfirmation(){
+  if(!email.trim()){setMessage("Enter your email address to resend confirmation.");return;}
+  setBusy(true);setMessage("");
+  try{await request("/auth/v1/resend?redirect_to="+encodeURIComponent(CONFIRM_URL),null,{method:"POST",body:JSON.stringify({type:"signup",email:email.trim()})});setMessage("If this account is awaiting confirmation, a fresh email has been sent. Open the newest link.");}
+  catch(e){setMessage(e instanceof Error?e.message:"Could not resend email.");}
   finally{setBusy(false);}
  }
  async function saveProfile(e:FormEvent){
@@ -175,7 +183,7 @@ export default function CommunityPage(){
     <form onSubmit={submitAuth} className="mt-5 space-y-3">
      <label className="block text-sm font-medium">Email<input required type="email" autoComplete="email" className="mt-1 w-full rounded-lg border p-3 text-base" value={email} onChange={e=>setEmail(e.target.value)}/></label>
      <label className="block text-sm font-medium">Password<input required minLength={6} type="password" autoComplete={mode==="signin"?"current-password":"new-password"} className="mt-1 w-full rounded-lg border p-3 text-base" value={password} onChange={e=>setPassword(e.target.value)}/></label>
-     <div className="flex flex-wrap items-center gap-3"><button disabled={busy} className="rounded-lg bg-[#1F443E] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy?"Connecting…":mode==="signin"?"Sign in":"Create account"}</button><button type="button" onClick={()=>setMode(mode==="signin"?"signup":"signin")} className="text-sm font-medium text-[#1F443E] underline">{mode==="signin"?"Create an account":"Already have an account?"}</button></div>
+     <div className="flex flex-wrap items-center gap-3"><button disabled={busy} className="rounded-lg bg-[#1F443E] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy?"Connecting…":mode==="signin"?"Sign in":"Create account"}</button><button type="button" onClick={()=>setMode(mode==="signin"?"signup":"signin")} className="text-sm font-medium text-[#1F443E] underline">{mode==="signin"?"Create an account":"Already have an account?"}</button><button type="button" disabled={busy} onClick={()=>void resendConfirmation()} className="text-sm font-medium text-[#1F443E] underline disabled:opacity-50">Resend confirmation email</button></div>
     </form>
    </section>:
    <>
