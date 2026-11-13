@@ -19,7 +19,7 @@ export default function ScheduleExplorer({items=officialOutline,source="outline"
   const [category,setCategory]=useState("all");
   const [query,setQuery]=useState("");
   const agenda=useAgendaSync(items.map(item=>item.id));
-  const {saved,loaded,session,status,message,setMessage,authBusy,toggle,signIn,signUp,signOut,importItems,mergeGuest,retry}=agenda;
+  const {saved,loaded,session,status,message,setMessage,authBusy,toggle,signIn,signUp,resendConfirmation,signOut,importItems,mergeGuest,retry}=agenda;
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
   const [authMode,setAuthMode]=useState<"sign-in"|"sign-up">("sign-in");
@@ -90,7 +90,7 @@ export default function ScheduleExplorer({items=officialOutline,source="outline"
           <p className="sm:col-span-2 text-sm font-semibold text-[#1F443E]">{authMode==="sign-in"?"Sign in to your saved agenda":"Create an attendee account"}</p>
           <label className="text-xs font-medium text-slate-700">Email<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} className="mt-1 w-full rounded-lg border border-[#C9D9D1] bg-white px-3 py-2 text-base"/></label>
           <label className="text-xs font-medium text-slate-700">Password<input required minLength={6} type="password" autoComplete={authMode==="sign-in"?"current-password":"new-password"} value={password} onChange={e=>setPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-[#C9D9D1] bg-white px-3 py-2 text-base"/></label>
-          <div className="flex flex-wrap items-center gap-3 sm:col-span-2"><button disabled={authBusy} className="rounded-lg bg-[#1F443E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{authBusy?"Connecting…":authMode==="sign-in"?"Sign in":"Create account"}</button><button type="button" onClick={()=>setAuthMode(authMode==="sign-in"?"sign-up":"sign-in")} className="text-xs font-semibold text-[#1F443E] underline">{authMode==="sign-in"?"Need an account? Sign up":"Already registered? Sign in"}</button></div>
+          <div className="flex flex-wrap items-center gap-3 sm:col-span-2"><button disabled={authBusy} className="rounded-lg bg-[#1F443E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{authBusy?"Connecting…":authMode==="sign-in"?"Sign in":"Create account"}</button><button type="button" onClick={()=>setAuthMode(authMode==="sign-in"?"sign-up":"sign-in")} className="text-xs font-semibold text-[#1F443E] underline">{authMode==="sign-in"?"Need an account? Sign up":"Already registered? Sign in"}</button><button type="button" disabled={authBusy||!email.trim()} onClick={()=>void resendConfirmation(email)} className="text-xs font-semibold text-[#1F443E] underline disabled:opacity-50">Resend confirmation email</button></div>
           <p className="text-xs leading-relaxed text-slate-600 sm:col-span-2">Accounts sync your approved conference sessions across browsers and devices once online. Email confirmation may be required. Guests can still browse and save locally.</p>
         </form>}
       </div>
