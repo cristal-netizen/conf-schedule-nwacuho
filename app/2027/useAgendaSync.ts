@@ -41,6 +41,7 @@ function parseSession(value:unknown):Session|null{
 function authHeaders(token?:string):HeadersInit {
  return {apikey:publicKey||"", "Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})};
 }
+const CONFIRM_URL="https://nwacuho.app/2027/auth/confirmed";
 async function authCall(path:string,body:unknown){
  if(!url||!publicKey)throw new Error("Account syncing is not configured.");
  const response=await fetch(url+"/auth/v1/"+path,{method:"POST",headers:authHeaders(),body:JSON.stringify(body),cache:"no-store"});
@@ -198,7 +199,7 @@ export function useAgendaSync(validIds:string[]){
  async function signUp(email:string,password:string){
   setAuthBusy(true);setMessage("");
   try{
-   const result=await authCall("signup",{email:email.trim(),password});
+   const result=await authCall("signup?redirect_to="+encodeURIComponent(CONFIRM_URL),{email:email.trim(),password});
    const next=authToSession(result);
    if(next){
     authRevision.current++;setAccount(next);setSavedNow([]);remoteRef.current=[];setStatus("syncing");
@@ -208,6 +209,15 @@ export function useAgendaSync(validIds:string[]){
    setMessage("Account created. Check your email to confirm your address, then sign in to sync your agenda.");
    return false;
   }catch(e){setMessage(e instanceof Error?e.message:"Account creation failed.");return false;}
+  finally{setAuthBusy(false);}
+ }
+ async function resendConfirmation(email:string){
+  setAuthBusy(true);setMessage("");
+  try{
+   await authCall("resend?redirect_to="+encodeURIComponent(CONFIRM_URL),{email:email.trim(),type:"signup"});
+   setMessage("If this account is awaiting verification, a new confirmation email has been sent. Use the newest link.");
+   return true;
+  }catch(e){setMessage(e instanceof Error?e.message:"Could not resend confirmation.");return false;}
   finally{setAuthBusy(false);}
  }
  function signOut(){
@@ -241,5 +251,5 @@ export function useAgendaSync(validIds:string[]){
    setMessage(count?`Imported ${count} guest selections. Syncing to your account.`:"No additional guest selections to import.");
   }catch{setMessage("Could not access guest selections on this device.");}
  }
- return {saved,loaded,session,status,message,setMessage,authBusy,toggle,signIn,signUp,signOut,importItems,mergeGuest,retry:sync};
+ return {saved,loaded,session,status,message,setMessage,authBusy,toggle,signIn,signUp,resendConfirmation,signOut,importItems,mergeGuest,retry:sync};
 }
