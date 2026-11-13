@@ -1,6 +1,7 @@
-import {CalendarDays,MapPin,Ticket,Star,ArrowUpRight,ExternalLink,Compass,Users,Accessibility,MessageSquare} from "lucide-react";
+import {CalendarDays,MapPin,Ticket,Star,ArrowUpRight,ExternalLink,Compass,Users,Accessibility,MessageSquare,Building2,Mic2} from "lucide-react";
 import Link from "next/link";
 import ScheduleExplorer from "./ScheduleExplorer";
+import {getPublicExhibitors} from "./publicDirectory";
 import {officialOutline,type ProgramItem,type ProgramDay} from "./officialOutline";
 
 type Row = Record<string, unknown>;
@@ -26,6 +27,7 @@ function category(value:string):ProgramItem["category"]{
   return "general";
 }
 export default async function Conference2027(){
+  const spotlightExhibitors=await getPublicExhibitors();
   const conf=await fetchPublic("conferences","select=id,status&year=eq.2027&status=eq.published&limit=1");
   const conferenceId=typeof conf[0]?.id==="string"?conf[0].id:null;
   const [rows,announcements]=conferenceId?await Promise.all([
@@ -60,6 +62,15 @@ export default async function Conference2027(){
         <Link href="/2027/venue" className="group flex items-start gap-3 rounded-2xl border border-[#E0E8E1] bg-white p-5 shadow-sm hover:border-[#87ADA1]"><span className="rounded-xl bg-[#EDF3F0] p-3 text-[#1F443E]"><MapPin size={22}/></span><span className="flex-1"><strong className="block text-[#1F443E]">Hotel & venue</strong><span className="mt-1 block text-sm text-slate-600">Hotel floor plans, virtual tour & amenities</span></span><ArrowUpRight size={17} className="text-[#4D746D]"/></Link>
         <a href="#schedule" className="group flex items-start gap-3 rounded-2xl border border-[#E0E8E1] bg-white p-5 shadow-sm hover:border-[#87ADA1]"><span className="rounded-xl bg-[#EDF3F0] p-3 text-[#1F443E]"><Star size={22}/></span><span className="flex-1"><strong className="block text-[#1F443E]">Build My Agenda</strong><span className="mt-1 block text-sm text-slate-600">Save an agenda with optional account sync</span></span><ArrowUpRight size={17} className="text-[#4D746D]"/></a>
       </section>
+      <section aria-label="Exhibitor spotlight" className="overflow-hidden rounded-3xl border border-[#D2E1D8] bg-white">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#E1E9E4] bg-[#EAF2ED] p-6 sm:p-8">
+          <div className="max-w-2xl"><p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#436B58]"><Building2 size={16}/> Exhibitor spotlight</p><h2 className="mt-2 font-serif text-3xl font-semibold text-[#1F443E]">Discover our exhibit hall.</h2><p className="mt-2 text-sm leading-relaxed text-[#49675B]">Meet organizations and partners bringing ideas, services, and solutions to the campus housing community.</p></div>
+          <Link href="/2027/exhibitors" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1F443E] px-5 py-3 text-sm font-semibold text-white">Explore exhibitors <ArrowUpRight size={16}/></Link>
+        </div>
+        {spotlightExhibitors.length>0?<div className="grid gap-3 p-5 sm:grid-cols-3 sm:p-6">{spotlightExhibitors.slice(0,3).map(exhibitor=><Link key={exhibitor.id} href={`/2027/exhibitors#exhibitor-${exhibitor.id}`} className="group rounded-xl border border-[#E0E8E1] bg-[#FCFDFC] p-5 transition hover:border-[#8AAE9C]"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E7F0EB] text-[#406953]"><Building2 size={23}/></div><h3 className="mt-4 font-bold text-[#1F443E]">{exhibitor.name}</h3>{exhibitor.category&&<p className="mt-1 text-xs font-medium text-[#547768]">{exhibitor.category}</p>}{exhibitor.description&&<p className="mt-2 line-clamp-2 text-sm text-slate-600">{exhibitor.description}</p>}</Link>)}</div>:
+        <div className="flex flex-wrap items-center gap-4 p-6 sm:p-8"><div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#E9F2EC] text-[#527C68]"><Building2 size={28}/></div><div className="flex-1"><h3 className="font-semibold text-[#1F443E]">Exhibitor announcements coming soon</h3><p className="mt-1 text-sm text-slate-600">Confirmed participating organizations and their booth information will appear here once approved.</p></div></div>}
+      </section>
+      <section aria-label="2027 speakers" className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#DAE6E0] bg-white p-6 sm:p-7"><div className="flex items-center gap-4"><span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#EAF2ED] text-[#4D746D]"><Mic2 size={23}/></span><div><h2 className="font-serif text-xl font-semibold text-[#1F443E]">Meet the 2027 speakers</h2><p className="mt-1 text-sm text-slate-600">Speaker profiles and presentation details will be added as the program is confirmed.</p></div></div><Link href="/2027/speakers" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#A8C4B6] px-4 py-2 text-sm font-semibold text-[#1F443E] hover:bg-[#EDF3F0]">Explore speakers <ArrowUpRight size={16}/></Link></section>
       {announcements.length>0&&<section className="rounded-2xl border border-[#BCD2C8] bg-[#EDF3F0] p-6"><h2 className="font-serif text-2xl text-[#1F443E]">Conference updates</h2><div className="mt-4 space-y-4">{announcements.map(item=><article key={String(item.id)}><h3 className="font-semibold text-[#1F443E]">{String(item.title)}</h3><p className="mt-1 whitespace-pre-line text-sm text-slate-700">{String(item.body)}</p></article>)}</div></section>}
       <section aria-label="Community and networking" className="grid gap-4 rounded-3xl border border-[#D3E2DB] bg-white p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8">
   <div><p className="text-xs font-bold uppercase tracking-widest text-[#4D746D]">Meet your people</p><h2 className="mt-2 font-serif text-3xl font-semibold text-[#1F443E]">Conversations beyond the sessions.</h2><p className="mt-2 max-w-2xl text-sm text-slate-600">Join message boards, arrange informal meetups, ask colleagues questions, and build your network. Create a profile and choose whether to appear in the attendee directory.</p></div>
