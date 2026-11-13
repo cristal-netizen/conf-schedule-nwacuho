@@ -23,7 +23,7 @@ export default function ConfirmationPage(){
    }
    const access=hash.get("access_token"),refresh=hash.get("refresh_token"),expires=Number(hash.get("expires_in")||3600);
    if(!access||!refresh){
-    if(active){setStatus("success");setDetail("Your confirmation link has opened the conference app. If your email was confirmed, sign in with the password you created.");}
+    if(active){setStatus("error");setDetail("The confirmation page opened without session details. Your email may already be verified. Please try signing in with the password you created.");}
     return;
    }
    if(!api||!publishableKey){
